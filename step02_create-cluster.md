@@ -4,11 +4,11 @@
 
 このハンズオンは以下のバージョンで動作確認を行いました。
 
-```bash:コマンド
+```
 aws --version
 ```
 
-```text:結果
+```
 
 ```
 
@@ -25,17 +25,17 @@ aws --version
 
 ## リージョンを指定
 
-```bash:コマンド
+```
 export AWS_DEFAULT_REGION='ap-northeast-1'
 ```
 
 ## 資格情報を確認
 
-```bash:コマンド
+```
 aws configure list
 ```
 
-```text:結果
+```
 
 ```
 
@@ -182,6 +182,8 @@ aws redshift create-cluster \
 --cluster-subnet-group-name ${CLUSTER_SUBNET_GROUP_NAME} \
 --vpc-security-group-ids ${SG_ID_REDSHIFT}
 ```
+
+
 ```
 [--cluster-version <value>]
 [--allow-version-upgrade | --no-allow-version-upgrade]

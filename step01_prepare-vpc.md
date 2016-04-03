@@ -11,11 +11,11 @@
 
 このハンズオンは以下のバージョンで動作確認を行いました。
 
-```bash:コマンド
+```
 aws --version
 ```
 
-```text:結果
+```
 aws-cli/1.10.17 Python/2.7.10 Linux/4.1.19-24.31.amzn1.x86_64 botocore/1.4.8
 ```
 
@@ -32,17 +32,17 @@ aws-cli/1.10.17 Python/2.7.10 Linux/4.1.19-24.31.amzn1.x86_64 botocore/1.4.8
 
 ## リージョンを指定
 
-```bash:コマンド
+```
 export AWS_DEFAULT_REGION='ap-northeast-1'
 ```
 
 ## 資格情報を確認
 
-```bash:コマンド
+```
 aws configure list
 ```
 
-```text:結果
+```
 Name                    Value             Type    Location
 ----                    -----             ----    --------
 profile                <not set>             None    None
@@ -55,13 +55,13 @@ region           ap-northeast-1              env    AWS_DEFAULT_REGION
 
 ## VPCのCIDRを指定
 
-```bash:コマンド
+```
 CIDR_BLOCK='10.0.0.0/16'
 ```
 
 ## パラメータを確認
 
-```bash:コマンド
+```
 cat << ETX
 
    VPC_CIDR_BLOCK: "${CIDR_BLOCK}"
@@ -69,7 +69,7 @@ cat << ETX
 ETX
 ```
 
-```text:結果
+```
 
    VPC_CIDR_BLOCK: "10.0.0.0/16"
 
@@ -77,22 +77,22 @@ ETX
 
 ## VPCを作成
 
-```bash:コマンド
+```
 VPC_ID=`aws ec2 create-vpc --cidr-block ${CIDR_BLOCK} --query Vpc.VpcId | sed s/\"//g`
 echo ${VPC_ID}
 ```
 
-```text:結果
+```
 vpc-********
 ```
 
 ## 作成したVPCの確認
 
-```bash:コマンド
+```
 aws ec2 describe-vpcs --vpc-ids ${VPC_ID}
 ```
 
-```json:結果
+```
 {
     "Vpcs": [
         {
@@ -111,22 +111,22 @@ aws ec2 describe-vpcs --vpc-ids ${VPC_ID}
 
 ## インターネットゲートウェイの作成
 
-```bash:コマンド
+```
 IGW_ID=`aws ec2 create-internet-gateway --query InternetGateway.InternetGatewayId | sed s/\"//g`
 echo ${IGW_ID}
 ```
 
-```text:結果
+```
 igw-********
 ```
 
 ## 作成したInternet Gatewayを確認
 
-```bash:コマンド
+```
 aws ec2 describe-internet-gateways --internet-gateway-ids ${IGW_ID}
 ```
 
-```json:結果
+```
 {
     "InternetGateways": [
         {
@@ -140,7 +140,7 @@ aws ec2 describe-internet-gateways --internet-gateway-ids ${IGW_ID}
 
 ## パラメータを確認
 
-```bash:コマンド
+```
 cat << ETX
 
    VPC_ID: "${VPC_ID}"
@@ -149,7 +149,7 @@ cat << ETX
 ETX
 ```
 
-```text:結果
+```
 
    VPC_ID: "vpc-********"
    IGW_ID: "igw-********"
@@ -158,21 +158,21 @@ ETX
 
 ## VPCにインターネットゲートウェイをアタッチ
 
-```bash:コマンド
+```
 aws ec2 attach-internet-gateway --internet-gateway-id ${IGW_ID} --vpc-id ${VPC_ID}
 ```
 
-```text:結果
+```
 (返値なし)
 ```
 
 ## アタッチした結果を確認
 
-```bash:コマンド
+```
 aws ec2 describe-internet-gateways --internet-gateway-ids ${IGW_ID}
 ```
 
-```json:結果
+```
 {
     "InternetGateways": [
         {
@@ -197,13 +197,13 @@ RedhshiftにおけるSubnet Groupは、1つ以上のSubnetを含んでいる必�
 
 ## サブネットを指定
 
-```bash:コマンド
+```
 CIDR_BLOCK_SUBNET_A='10.0.0.0/24'
 ```
 
 ## パラメータを確認
 
-```bash:コマンド
+```
 cat << ETX
 
    VPC_ID: "${VPC_ID}"
@@ -212,7 +212,7 @@ cat << ETX
 ETX
 ```
 
-```text:結果
+```
 
    VPC_ID: "vpc-ef43168a"
    Subnet_CIDR_BLOCK_on_ap-northeast-1a: "10.0.0.0/24"
@@ -221,18 +221,18 @@ ETX
 
 ## サブネットを作成
 
-```bash:コマンド
+```
 SUBNET_A_ID=`aws ec2 create-subnet --vpc-id ${VPC_ID} --cidr-block ${CIDR_BLOCK_SUBNET_A} --availability-zone ${AWS_DEFAULT_REGION}a --query Subnet.SubnetId | sed s/\"//g`
 echo ${SUBNET_A_ID}
 ```
 
 ## 作成したサブネットを確認
 
-```bash:コマンド
+```
 aws ec2 describe-subnets --subnet-ids ${SUBNET_A_ID}
 ```
 
-```json:結果
+```
 {
     "Subnets": [
         {
@@ -253,15 +253,14 @@ aws ec2 describe-subnets --subnet-ids ${SUBNET_A_ID}
 
 ## 作成したVPCのデフォルトのルートテーブルIDを確認
 
-【JMESPathで書き換え】
-```bash:コマンド
+```
 ROUTE_TABLE_ID=`aws ec2 describe-route-tables --query RouteTables[?VpcId==\'${VPC_ID}\'].RouteTableId | jq ".[]" | sed s/\"//g`
 echo ${ROUTE_TABLE_ID}
 ```
 
 ## パラメータを確認
 
-```bash:コマンド
+```
 cat << ETX
 
    RouteTable_ID: "${ROUTE_TABLE_ID}"
@@ -270,7 +269,7 @@ cat << ETX
 ETX
 ```
 
-```text:結果
+```
 
    RouteTable_ID: "rtb-********"
    InternetGateat_ID: "igw-********"
@@ -279,11 +278,11 @@ ETX
 
 ## デフォルトのルートテーブルにデフォルトルートを追加
 
-```bash:コマンド
+```
 aws ec2 create-route --route-table-id ${ROUTE_TABLE_ID} --destination-cidr-block '0.0.0.0/0' --gateway-id ${IGW_ID}
 ```
 
-```text:結果
+```
 {
     "Return": true
 }
@@ -291,11 +290,11 @@ aws ec2 create-route --route-table-id ${ROUTE_TABLE_ID} --destination-cidr-block
 
 ## ルートテーブルに追加したルートを確認
 
-```bash:コマンド
+```
 aws ec2 describe-route-tables --query RouteTables[?VpcId==\'${VPC_ID}\']
 ```
 
-```json:結果
+```
 [
     {
         "Associations": [
@@ -331,14 +330,14 @@ aws ec2 describe-route-tables --query RouteTables[?VpcId==\'${VPC_ID}\']
 
 ## Security Groupの名前を設定（Amazon Linux用）
 
-```bash:コマンド
+```
 SG_GROUP_NAME_SSH='SSH'
 SG_DESCRIPTION_SSH='JAWS-UG CLI at Co-Edo'
 ```
 
 ## パラメータの確認
 
-```bash:コマンド
+```
 cat << ETX
 
    SG_GROUP_NAME_SSH: ${SG_GROUP_NAME_SSH}
@@ -347,7 +346,7 @@ cat << ETX
 ETX
 ```
 
-```text:結果
+```
 
    SG_GROUP_NAME_SSH: SSH
    SG_DESCRIPTION_SSH: JAWS-UG CLI at Co-Edo
@@ -356,12 +355,12 @@ ETX
 
 ## ユーザ作成用のEC2インスタンスに設定するSecurity Groupを作成
 
-```bash:コマンド
+```
 SG_ID_SSH=`aws ec2 create-security-group --group-name ${SG_GROUP_NAME_SSH} --description "${SG_DESCRIPTION_SSH}" --vpc-id ${VPC_ID} --query GroupId | sed s/\"//g`
 echo ${SG_ID_SSH}
 ```
 
-```json:結果
+```
 sg-********
 ```
 
@@ -370,11 +369,11 @@ sg-********
 
 （アウトバウンドの通信のみ全て許可する設定のみ、がデフォルト）
 
-```bash:コマンド
+```
 aws ec2 describe-security-groups --group-ids ${SG_ID_SSH}
 ```
 
-```json:結果
+```
 {
     "SecurityGroups": [
         {
@@ -408,17 +407,17 @@ ssh接続を許可します。
 接続元のIPアドレスを制限したい場合には、確認君などでIPアドレスを確認してください。
 http://www.ugtop.com/spill.shtml
 
-```bash:コマンド
+```
 aws ec2 authorize-security-group-ingress --group-id ${SG_ID_SSH} --protocol 'tcp' --port 22 --cidr 0.0.0.0/0
 ```
 
 ## 追加されたルールを確認
 
-```bash:コマンド
+```
 aws ec2 describe-security-groups --group-ids ${SG_ID_SSH}
 ```
 
-```json:結果
+```
 {
     "SecurityGroups": [
         {
@@ -460,14 +459,14 @@ aws ec2 describe-security-groups --group-ids ${SG_ID_SSH}
 
 ## Security Groupの名前を設定（Redshiftクラスタ用）
 
-```bash:コマンド
+```
 SG_GROUP_NAME_REDSHIFT='Redshift'
 SG_DESCRIPTION_REDSHIFT='JAWS-UG CLI at Co-Edo'
 ```
 
 ## パラメータの確認
 
-```bash:コマンド
+```
 cat << ETX
 
    SG_GROUP_NAME: ${SG_GROUP_NAME_REDSHIFT}
@@ -476,7 +475,7 @@ cat << ETX
 ETX
 ```
 
-```text:結果
+```
 
    SG_GROUP_NAME: Redshift
    SG_DESCRIPTION: JAWS-UG CLI at Co-Edo
@@ -485,12 +484,12 @@ ETX
 
 ## ユーザ作成用のEC2インスタンスに設定するSecurity Groupを作成
 
-```bash:コマンド
+```
 SG_ID_REDSHIFT=`aws ec2 create-security-group --group-name ${SG_GROUP_NAME_REDSHIFT} --description "${SG_DESCRIPTION_REDSHIFT}" --vpc-id ${VPC_ID} --query GroupId | sed s/\"//g`
 echo ${SG_ID_REDSHIFT}
 ```
 
-```json:結果
+```
 sg-********
 ```
 
@@ -498,11 +497,11 @@ sg-********
 
 （アウトバウンドの通信のみ全て許可する設定のみ、がデフォルト）
 
-```bash:コマンド
+```
 aws ec2 describe-security-groups --group-ids ${SG_ID_REDSHIFT}
 ```
 
-```json:結果
+```
 {
     "SecurityGroups": [
         {
@@ -533,17 +532,17 @@ aws ec2 describe-security-groups --group-ids ${SG_ID_REDSHIFT}
 
 Redshiftへの接続を許可します。
 
-```bash:コマンド
+```
 aws ec2 authorize-security-group-ingress --group-id ${SG_ID_REDSHIFT} --protocol 'tcp' --port 5439 --source-group ${SG_ID_SSH}
 ```
 
 ## 追加されたルールを確認
 
-```bash:コマンド
+```
 aws ec2 describe-security-groups --group-ids ${SG_ID_REDSHIFT}
 ```
 
-```json:結果
+```
 {
     "SecurityGroups": [
         {
@@ -589,32 +588,32 @@ aws ec2 describe-security-groups --group-ids ${SG_ID_REDSHIFT}
 
 ## KeyPairの名前および秘密鍵のファイル名を設定
 
-```bash:コマンド
+```
 KEY_PAIR_NAME='Redshift'
 KEY_MATERIAL_FILE='key.pem'
 ```
 
 ## 同名のKey Pairおよび秘密鍵ファイルが存在しないことを確認
 
-```bash:コマンド
+```
 aws ec2 describe-key-pairs --key-names ${KEY_PAIR_NAME}
 ```
 
-```text:結果
+```
 A client error (InvalidKeyPair.NotFound) occurred when calling the DescribeKeyPairs operation: The key pair 'Redshift' does not exist
 ```
 
-```bash:コマンド
+```
 ls -al ~/.ssh | grep ${KEY_MATERIAL_FILE}
 ```
 
-```text:結果
+```
 （返値無し）
 ```
 
 ## パラメータの確認
 
-```bash:コマンド
+```
 cat << ETX
 
    KEY_PAIR_NAME: ${KEY_PAIR_NAME}
@@ -623,25 +622,22 @@ cat << ETX
 ETX
 ```
 
-```text:結果
-
-```
 
 ## KeyPairの作成
 
-【JMESPathで書き換え】
-```bash:コマンド
+
+```
 aws ec2 create-key-pair --key-name ${KEY_PAIR_NAME} --query KeyMaterial | sed s/\"//g > ~/.ssh/${KEY_MATERIAL_FILE}
 
 ```
 
 ## Key Pairが作成されたことを確認
 
-```bash:コマンド
+```
 aws ec2 describe-key-pairs --key-names ${KEY_PAIR_NAME}
 ```
 
-```json:結果
+```
 {
     "KeyPairs": [
         {
@@ -663,22 +659,22 @@ cat ~/.ssh/${KEY_MATERIAL_FILE}
 
 ## 同名のロールがないことを確認
 
-```bash:コマンド
+```
 ROLE_NAME='redshift-role'
 aws iam get-role --role-name ${ROLE_NAME}
 ```
 
-```text:結果
+```
 A client error (NoSuchEntity) occurred when calling the GetRole operation: The role with name redshift-role cannot be found.
 ```
 
 ## 信頼関係の定義
 
-```bash:コマンド
+```
 TRUST_POLICY_FILE='Trust-Policy.json'
 ```
 
-```bash:コマンド
+```
 cat << EOF > ${TRUST_POLICY_FILE}
 {
   "Version": "2012-10-17",
@@ -698,17 +694,17 @@ EOF
 
 JSONファイルを検証
 
-```bash:コマンド
+```
 jsonlint -q ${TRUST_POLICY_FILE}
 ```
 
 ## IAMロールの作成
 
-```bash:コマンド
+```
 aws iam create-role --role-name ${ROLE_NAME} --assume-role-policy-document file://${TRUST_POLICY_FILE}
 ```
 
-```json:結果
+```
 {
     "Role": {
         "AssumeRolePolicyDocument": {
@@ -735,42 +731,42 @@ aws iam create-role --role-name ${ROLE_NAME} --assume-role-policy-document file:
 
 ## IAMロールにManaged Policyをアタッチ
 
-```bash:コマンド
+```
 POLICY_ARN='arn:aws:iam::aws:policy/AmazonRedshiftFullAccess'
 aws iam attach-role-policy --role-name ${ROLE_NAME} --policy-arn ${POLICY_ARN}
 ```
 
-```text:結果
+```
 （返値無し）
 ```
 
 ## IAM Roleにポリシーがアタッチされたことを確認
 
-```bash:コマンド
+```
 aws iam list-attached-role-policies --role-name ${ROLE_NAME}
 ```
 
-```json:結果
+```
 
 ```
 
 ## 同名のインスタンスプロファイルが存在しないことを確認
 
-```bash:コマンド
+```
 aws iam get-instance-profile --instance-profile-name ${ROLE_NAME}
 ```
 
-```text:結果
+```
 A client error (NoSuchEntity) occurred when calling the GetInstanceProfile operation: Instance Profile redshift-role cannot be found.
 ```
 
 ## インスタンスプロファイルを作成
 
-```bash:コマンド
+```
 aws iam create-instance-profile --instance-profile-name ${ROLE_NAME}
 ```
 
-```json:結果
+```
 {
     "InstanceProfile": {
         "InstanceProfileId": "A********************",
@@ -785,11 +781,11 @@ aws iam create-instance-profile --instance-profile-name ${ROLE_NAME}
 
 ## インスタンスプロファイルが作成されたことを確認
 
-```bash:コマンド
+```
 aws iam get-instance-profile --instance-profile-name ${ROLE_NAME}
 ```
 
-```json:結果
+```
 {
     "InstanceProfile": {
         "InstanceProfileId": "A********************",
@@ -804,21 +800,21 @@ aws iam get-instance-profile --instance-profile-name ${ROLE_NAME}
 
 ## インスタンスプロファイルにIAM Roleを追加
 
-```bash:コマンド
+```
 aws iam add-role-to-instance-profile --instance-profile-name ${ROLE_NAME} --role-name ${ROLE_NAME}
 ```
 
-```text:結果
+```
 （返値無し）
 ```
 
 ## インスタンスプロファイルにIAM Roleが追加されたことを確認
 
-```bash:コマンド
+```
 aws iam get-instance-profile --instance-profile-name ${ROLE_NAME}
 ```
 
-```json:結果
+```
 {
     "InstanceProfile": {
         "InstanceProfileId": "A********************",
@@ -858,15 +854,14 @@ aws iam get-instance-profile --instance-profile-name ${ROLE_NAME}
 
 Amazon LinuxのAMIのうち、作成日が最新のAMIを利用します。
 
-【JMESPathで書き換え】
-```bash:コマンド
+```
 AMI_ID=`aws ec2 describe-images --owners amazon --query Images[?Name==\'amzn-ami-hvm-2016.03.0.x86_64-gp2\'].ImageId | jq ".[]" | sed s/\"//g`
 echo ${AMI_ID}
 ```
 
 ## パラメータを確認
 
-```bash:コマンド
+```
 USER_NAME=`aws iam list-users --query Users[0].UserName | sed s/\"//g`
 AWS_ID=$( \
         aws iam get-user \
@@ -879,11 +874,11 @@ AWS_ID=$( \
         && echo ${AWS_ID}
 ```
 
-```text:結果
+```
 ************
 ```
 
-```bash:コマンド
+```
 cat << ETX
 
    AWS_ID: ${AWS_ID}
@@ -896,7 +891,7 @@ cat << ETX
 ETX
 ```
 
-```text:結果
+```
 
    AWS_ID: ************
    AMI_ID: "ami-f80e0596"
@@ -909,8 +904,7 @@ ETX
 
 ## EC2インスタンスを作成
 
-【JMESPathで書き換え】
-```bash:コマンド
+```
 INSTANCE_ID=`aws ec2 run-instances --image-id ${AMI_ID} --key-name ${KEY_PAIR_NAME} --security-group-ids ${SG_ID_SSH} --instance-type 't2.micro' --subnet-id ${SUBNET_A_ID} --associate-public-ip-address --iam-instance-profile Arn=arn:aws:iam::${AWS_ID}:instance-profile/${ROLE_NAME} --query Instances[0].InstanceId | sed s/\"//g`
 
 echo ${INSTANCE_ID}
@@ -922,11 +916,11 @@ i-0****************
 
 ## EC2インスタンスが作成されたことを確認
 
-```bash:コマンド
+```
 aws ec2 describe-instances --instance-ids ${INSTANCE_ID}
 ```
 
-```json:結果
+```
 {
     "Reservations": [
         {
@@ -1041,7 +1035,7 @@ aws ec2 describe-instances --instance-ids ${INSTANCE_ID}
 
 ## パブリックIPを確認
 
-```bash:コマンド
+```
 PUBLIC_IP_ADDRESS=`aws ec2 describe-instances --instance-ids ${INSTANCE_ID} --query Reservations[0].Instances[0].PublicIpAddress | sed s/\"//g`
 echo ${PUBLIC_IP_ADDRESS}
 ```
