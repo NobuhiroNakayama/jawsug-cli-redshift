@@ -591,7 +591,7 @@ aws ec2 describe-security-groups --group-ids ${SG_ID_REDSHIFT}
 
 ```
 KEY_PAIR_NAME='Redshift'
-KEY_MATERIAL_FILE='key.pem'
+KEY_MATERIAL_FILE='redshift.pem'
 ```
 
 ## 同名のKey Pairおよび秘密鍵ファイルが存在しないことを確認
@@ -673,9 +673,7 @@ A client error (NoSuchEntity) occurred when calling the GetRole operation: The r
 
 ```
 TRUST_POLICY_FILE='Trust-Policy.json'
-```
 
-```
 cat << EOF > ${TRUST_POLICY_FILE}
 {
   "Version": "2012-10-17",
@@ -748,7 +746,14 @@ aws iam list-attached-role-policies --role-name ${ROLE_NAME}
 ```
 
 ```
-
+{
+    "AttachedPolicies": [
+        {
+            "PolicyName": "AmazonRedshiftFullAccess",
+            "PolicyArn": "arn:aws:iam::aws:policy/AmazonRedshiftFullAccess"
+        }
+    ]
+}
 ```
 
 ## 同名のインスタンスプロファイルが存在しないことを確認
@@ -851,7 +856,7 @@ aws iam get-instance-profile --instance-profile-name ${ROLE_NAME}
 
 # 8. EC2インスタンスの作成
 
-## Windows Serverの最新AMIのImage IDを確認
+## Amazon Linuxの最新AMIのImage IDを確認
 
 Amazon LinuxのAMIのうち、作成日が最新のAMIを利用します。
 
@@ -862,22 +867,17 @@ echo ${AMI_ID}
 
 ## パラメータを確認
 
+AWSアカウントのIDを取得
+
 ```
-USER_NAME=`aws iam list-users --query Users[0].UserName | sed s/\"//g`
-AWS_ID=$( \
-        aws iam get-user \
-          --user-name ${USER_NAME} \
-          --query 'User.Arn' | \
-          sed s/\"//g | \
-          sed 's/^.*:://' | \
-          sed 's/:.*$//' \
-      ) \
-        && echo ${AWS_ID}
+AWS_ID=`aws sts get-caller-identity --query Account | sed s/\"//g` && echo ${AWS_ID}
 ```
 
 ```
 ************
 ```
+
+パラメータを確認
 
 ```
 cat << ETX

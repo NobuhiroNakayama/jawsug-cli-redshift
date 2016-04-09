@@ -81,10 +81,19 @@ CLUSTER_SUBNET_GROUP_DESCRIPTION="Subnet Group for Redshift"
 ```
 cat << ETX
 
-    :${CLUSTER_SUBNET_GROUP_NAME}
-    :${CLUSTER_SUBNET_GROUP_DESCRIPTION}
-    :${SUBNET_A_ID}
+    CLUSTER_SUBNET_GROUP_NAME:${CLUSTER_SUBNET_GROUP_NAME}
+    CLUSTER_SUBNET_GROUP_DESCRIPTION:${CLUSTER_SUBNET_GROUP_DESCRIPTION}
+    SUBNET_A_ID:${SUBNET_A_ID}
+    
 ETX
+```
+
+```
+
+    CLUSTER_SUBNET_GROUP_NAME:redshift-subnet
+    CLUSTER_SUBNET_GROUP_DESCRIPTION:Subnet Group for Redshift
+    SUBNET_A_ID:subnet-********
+    
 ```
 
 ## 作成
@@ -177,7 +186,13 @@ http://docs.aws.amazon.com/cli/latest/reference/redshift/create-cluster.html
 ```
 cat << ETX
 
-
+    CLUSTER_NAME:${CLUSTER_NAME}
+    DB_NAME:${DB_NAME}
+    PORT:${PORT}
+    MASTER_USER_NAME:${MASTER_USER_NAME}
+    MASTER_USER_PASSWORD:${MASTER_USER_PASSWORD}
+    NODE_TYPE:${NODE_TYPE}
+    CLUSTER_TYPE:${CLUSTER_TYPE}
 
 ETX
 ```
@@ -195,12 +210,6 @@ aws redshift create-cluster \
 --port ${PORT} \
 --cluster-subnet-group-name ${CLUSTER_SUBNET_GROUP_NAME} \
 --vpc-security-group-ids ${SG_ID_REDSHIFT}
-```
-
-
-```
-[--cluster-version <value>]
-[--allow-version-upgrade | --no-allow-version-upgrade]
 ```
 
 ```

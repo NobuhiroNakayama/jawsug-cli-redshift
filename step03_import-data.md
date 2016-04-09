@@ -59,7 +59,7 @@ region           ap-northeast-1              env    AWS_DEFAULT_REGION
 ## SSHで接続
 
 ```
-
+ssh -l ec2-user -i ~/.ssh/${KEY_MATERIAL_FILE} ${PUBLIC_IP_ADDRESS}
 ```
 
 
@@ -70,55 +70,157 @@ psqlを利用して接続します。
 参考情報
 http://docs.aws.amazon.com/ja_jp/redshift/latest/mgmt/connecting-from-psql.html
 
+PostgreSQLのインストール
+
+```
+sudo yum install postgresql-server
+```
+
+エンドポイントの確認
+
+```
+REDSHIFT_ENDPOINT=`aws redshift describe-clusters --query Clusters[?ClusterIdentifier==\'mycluster\'] | jq .[].ClusterNodes | jq -r .[].PrivateIPAddress`
+echo ${REDSHIFT_ENDPOINT}
+```
+
+ユーザ名、DB名、ポート番号の確認
+
+```
+DB_NAME="mydb"
+PORT="5439"
+MASTER_USER_NAME="awsuser"
+MASTER_USER_PASSWORD="Pa55w0rd"
+```
+
+パラメータの確認
+
+```
+cat << ETX
+
+    REDSHIFT_ENDPOINT:${REDSHIFT_ENDPOINT}
+    DB_NAME:${DB_NAME}
+    PORT:${PORT}
+    MASTER_USER_NAME:${MASTER_USER_NAME}
+    MASTER_USER_PASSWORD:${MASTER_USER_PASSWORD}
+
+ETX
+```
+
+接続確認
+（パスワード入力を要求されます）
+
+```
+psql -h ${REDSHIFT_ENDPOINT} -U ${MASTER_USER_NAME} -d ${DB_NAME} -p ${PORT}
+```
+
+バージョン確認
+
+```
+select version();
 ```
 
 ```
+                                                         version
 
+------------------------------------------------------------------------------------------------
+--------------------------
+ PostgreSQL 8.0.2 on i686-pc-linux-gnu, compiled by GCC gcc (GCC) 3.4.2 20041017 (Red Hat 3.4.2-
+6.fc3), Redshift 1.0.1043
+(1 row)
+```
+
+切断
+
+```
+\q
+```
+
+# 3.アクセスキーの取得
+
+インスタンスプロファイル名
+
+```
+ROLE_NAME="redshift-role"
+```
+
+アクセスキーの取得
+
+```
+ACCESS_KEY_ID=`curl http://169.254.169.254/latest/meta-data/iam/security-credentials/${ROLE_NAME} | jq -r .AccessKeyId`
+```
+
+アクセスシークレットキーの取得
+
+```
+SECRET_ACCESS_KEY=`curl http://169.254.169.254/latest/meta-data/iam/security-credentials/${ROLE_NAME} | jq -r .SecretAccessKey`
+```
+
+確認
+
+```
+cat << ETX
+
+    ACCESS_KEY_ID:${ACCESS_KEY_ID}
+    SECRET_ACCESS_KEY:${SECRET_ACCESS_KEY}
+    
+ETX
+```
 
 
 # 4．データのインポート
 
 AWSが提供するサンプルデータをインポートする
 
-アクセスキーを取得
-
 データをロードするためのコマンドを生成
 
-【アクセスキー部分を置き換える】
 ```
+LOAD_SAMPLE_DATA_FILE='load_sample_data.txt'
+
+cat << EOF > ${LOAD_SAMPLE_DATA_FILE}
+
 copy users from 's3://awssampledbuswest2/tickit/allusers_pipe.txt' 
-credentials 'aws_access_key_id=<access-key-id>;aws_secret_access_key=<secret-access-key>' 
+credentials 'aws_access_key_id=${ACCESS_KEY_ID};aws_secret_access_key=${SECRET_ACCESS_KEY}' 
 delimiter '|' region 'us-west-2';
 
 copy venue from 's3://awssampledbuswest2/tickit/venue_pipe.txt' 
-credentials 'aws_access_key_id=<access-key-id>;aws_secret_access_key=<secret-access-key>' 
+credentials 'aws_access_key_id=${ACCESS_KEY_ID};aws_secret_access_key=${SECRET_ACCESS_KEY}' 
 delimiter '|' region 'us-west-2';
 
 copy category from 's3://awssampledbuswest2/tickit/category_pipe.txt' 
-credentials 'aws_access_key_id=<access-key-id>;aws_secret_access_key=<secret-access-key>' 
+credentials 'aws_access_key_id=${ACCESS_KEY_ID};aws_secret_access_key=${SECRET_ACCESS_KEY}' 
 delimiter '|' region 'us-west-2';
 
 copy date from 's3://awssampledbuswest2/tickit/date2008_pipe.txt' 
-credentials 'aws_access_key_id=<access-key-id>;aws_secret_access_key=<secret-access-key>' 
+credentials 'aws_access_key_id=${ACCESS_KEY_ID};aws_secret_access_key=${SECRET_ACCESS_KEY}' 
 delimiter '|' region 'us-west-2';
 
 copy event from 's3://awssampledbuswest2/tickit/allevents_pipe.txt' 
-credentials 'aws_access_key_id=<access-key-id>;aws_secret_access_key=<secret-access-key>' 
+credentials 'aws_access_key_id=${ACCESS_KEY_ID};aws_secret_access_key=${SECRET_ACCESS_KEY}' 
 delimiter '|' timeformat 'YYYY-MM-DD HH:MI:SS' region 'us-west-2';
 
 copy listing from 's3://awssampledbuswest2/tickit/listings_pipe.txt' 
-credentials 'aws_access_key_id=<access-key-id>;aws_secret_access_key=<secret-access-key>' 
+credentials 'aws_access_key_id=${ACCESS_KEY_ID};aws_secret_access_key=${SECRET_ACCESS_KEY}' 
 delimiter '|' region 'us-west-2';
 
 copy sales from 's3://awssampledbuswest2/tickit/sales_tab.txt'
-credentials 'aws_access_key_id=<access-key-id>;aws_secret_access_key=<secret-access-key>'
+credentials 'aws_access_key_id=${ACCESS_KEY_ID};aws_secret_access_key=${SECRET_ACCESS_KEY}'
 delimiter '\t' timeformat 'MM/DD/YYYY HH:MI:SS' region 'us-west-2';
+
+EOF
 ```
 
+確認
+（ここで出力したコマンドをpsqlでの接続後に使用します）
+
+```
+cat ${LOAD_SAMPLE_DATA_FILE}
+```
 
 クラスタに接続
-```
+（パスワード入力を要求されます）
 
+```
+psql -h ${REDSHIFT_ENDPOINT} -U ${MASTER_USER_NAME} -d ${DB_NAME} -p ${PORT}
 ```
 
 テーブルを作成
