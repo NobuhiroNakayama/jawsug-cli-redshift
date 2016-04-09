@@ -207,6 +207,8 @@ ETX
 
 AWSが提供するサンプルデータをインポートする
 
+http://docs.aws.amazon.com/ja_jp/redshift/latest/dg/c_sampledb.html
+
 データをロードするためのコマンドを生成
 
 ```
@@ -359,3 +361,5 @@ select count(*) from event;
 select count(*) from listing;
 select count(*) from sales;
 ```
+
+以上

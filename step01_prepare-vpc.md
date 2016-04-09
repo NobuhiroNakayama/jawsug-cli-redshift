@@ -1041,4 +1041,4 @@ PUBLIC_IP_ADDRESS=`aws ec2 describe-instances --instance-ids ${INSTANCE_ID} --qu
 echo ${PUBLIC_IP_ADDRESS}
 ```
 
-以上です。
+以上
