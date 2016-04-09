@@ -53,7 +53,9 @@ region           ap-northeast-1              env    AWS_DEFAULT_REGION
 ```
 
 
-# クエリを実行
+# 1. クエリを実行
+
+（Step3の続き）
 
 ## SELECT
 

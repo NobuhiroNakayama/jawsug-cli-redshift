@@ -137,22 +137,58 @@ select version();
 
 # 3.アクセスキーの取得
 
-インスタンスプロファイル名
+ユーザ名の確認
 
 ```
-ROLE_NAME="redshift-role"
+IAM_USER_NAME="redshift_user"
+```
+
+ユーザの有無の確認
+
+```
+aws iam get-user --user-name ${IAM_USER_NAME}
+```
+
+```
+A client error (NoSuchEntity) occurred when calling the GetUser operation: The user with name redshift_user cannot be found.
+```
+
+IAMユーザの作成
+
+```
+aws iam create-user --user-name ${IAM_USER_NAME}
+```
+
+```
+{
+    "User": {
+        "UserName": "redshift_user",
+        "Path": "/",
+        "CreateDate": "2016-04-09T13:11:34.607Z",
+        "UserId": "A********************",
+        "Arn": "arn:aws:iam::************:user/redshift_user"
+    }
+}
+```
+
+アクセスキーの作成
+
+```
+RESPONSE_FILE="access_key.json"
+aws iam create-access-key --user-name ${IAM_USER_NAME} > ${RESPONSE_FILE}
+cat ${RESPONSE_FILE}
 ```
 
 アクセスキーの取得
 
 ```
-ACCESS_KEY_ID=`curl http://169.254.169.254/latest/meta-data/iam/security-credentials/${ROLE_NAME} | jq -r .AccessKeyId`
+ACCESS_KEY_ID=`jq -r .AccessKey.AccessKeyId ${RESPONSE_FILE}`
 ```
 
 アクセスシークレットキーの取得
 
 ```
-SECRET_ACCESS_KEY=`curl http://169.254.169.254/latest/meta-data/iam/security-credentials/${ROLE_NAME} | jq -r .SecretAccessKey`
+SECRET_ACCESS_KEY=`jq -r .AccessKey.SecretAccessKey ${RESPONSE_FILE}`
 ```
 
 確認
@@ -300,4 +336,26 @@ create table sales(
 	saletime timestamp);
 ```
 
+データのロード（結果）
 
+```
+INFO:  Load into table 'users' completed, 49990 record(s) loaded successfully.
+INFO:  Load into table 'venue' completed, 202 record(s) loaded successfully.
+INFO:  Load into table 'category' completed, 11 record(s) loaded successfully.
+INFO:  Load into table 'date' completed, 365 record(s) loaded successfully.
+INFO:  Load into table 'event' completed, 8798 record(s) loaded successfully.
+INFO:  Load into table 'listing' completed, 192497 record(s) loaded successfully.
+INFO:  Load into table 'sales' completed, 172456 record(s) loaded successfully.
+```
+
+ロード結果の確認
+
+```
+select count(*) from users;
+select count(*) from venue;
+select count(*) from category;
+select count(*) from date;
+select count(*) from event;
+select count(*) from listing;
+select count(*) from sales;
+```
