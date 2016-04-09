@@ -252,6 +252,8 @@ aws ec2 describe-subnets --subnet-ids ${SUBNET_A_ID}
 
 # 4. Route Tableの編集
 
+パブリックサブネットを作成するために、デフォルトのルートテーブルを編集します。
+
 ## 作成したVPCのデフォルトのルートテーブルIDを確認
 
 ```
@@ -458,131 +460,6 @@ aws ec2 describe-security-groups --group-ids ${SG_ID_SSH}
 }
 ```
 
-## Security Groupの名前を設定（Redshiftクラスタ用）
-
-```
-SG_GROUP_NAME_REDSHIFT='Redshift'
-SG_DESCRIPTION_REDSHIFT='JAWS-UG CLI at Co-Edo'
-```
-
-## パラメータの確認
-
-```
-cat << ETX
-
-   SG_GROUP_NAME: ${SG_GROUP_NAME_REDSHIFT}
-   SG_DESCRIPTION: ${SG_DESCRIPTION_REDSHIFT}
-
-ETX
-```
-
-```
-
-   SG_GROUP_NAME: Redshift
-   SG_DESCRIPTION: JAWS-UG CLI at Co-Edo
-
-```
-
-## ユーザ作成用のEC2インスタンスに設定するSecurity Groupを作成
-
-```
-SG_ID_REDSHIFT=`aws ec2 create-security-group --group-name ${SG_GROUP_NAME_REDSHIFT} --description "${SG_DESCRIPTION_REDSHIFT}" --vpc-id ${VPC_ID} --query GroupId | sed s/\"//g`
-echo ${SG_ID_REDSHIFT}
-```
-
-```
-sg-********
-```
-
-## 作成したSecurity Groupを確認
-
-（アウトバウンドの通信のみ全て許可する設定のみ、がデフォルト）
-
-```
-aws ec2 describe-security-groups --group-ids ${SG_ID_REDSHIFT}
-```
-
-```
-{
-    "SecurityGroups": [
-        {
-            "IpPermissionsEgress": [
-                {
-                    "IpProtocol": "-1",
-                    "IpRanges": [
-                        {
-                            "CidrIp": "0.0.0.0/0"
-                        }
-                    ],
-                    "UserIdGroupPairs": [],
-                    "PrefixListIds": []
-                }
-            ],
-            "Description": "JAWS-UG CLI at Co-Edo",
-            "IpPermissions": [],
-            "GroupName": "Redshift",
-            "VpcId": "vpc-********",
-            "OwnerId": "************",
-            "GroupId": "sg-********"
-        }
-    ]
-}
-```
-
-## インバウンドのルールを追加
-
-Redshiftへの接続を許可します。
-
-```
-aws ec2 authorize-security-group-ingress --group-id ${SG_ID_REDSHIFT} --protocol 'tcp' --port 5439 --source-group ${SG_ID_SSH}
-```
-
-## 追加されたルールを確認
-
-```
-aws ec2 describe-security-groups --group-ids ${SG_ID_REDSHIFT}
-```
-
-```
-{
-    "SecurityGroups": [
-        {
-            "IpPermissionsEgress": [
-                {
-                    "IpProtocol": "-1",
-                    "IpRanges": [
-                        {
-                            "CidrIp": "0.0.0.0/0"
-                        }
-                    ],
-                    "UserIdGroupPairs": [],
-                    "PrefixListIds": []
-                }
-            ],
-            "Description": "JAWS-UG CLI at Co-Edo",
-            "IpPermissions": [
-                {
-                    "PrefixListIds": [],
-                    "FromPort": 5439,
-                    "IpRanges": [],
-                    "ToPort": 5439,
-                    "IpProtocol": "tcp",
-                    "UserIdGroupPairs": [
-                        {
-                            "UserId": "************",
-                            "GroupId": "sg-********"
-                        }
-                    ]
-                }
-            ],
-            "GroupName": "Redshift",
-            "VpcId": "vpc-********",
-            "OwnerId": "************",
-            "GroupId": "sg-********"
-        }
-    ]
-}
-```
 
 
 # 6. Key Pairの作成
@@ -628,8 +505,7 @@ ETX
 
 
 ```
-aws ec2 create-key-pair --key-name ${KEY_PAIR_NAME} --query KeyMaterial | sed s/\"//g > ~/.ssh/${KEY_MATERIAL_FILE}
-
+aws ec2 create-key-pair --key-name ${KEY_PAIR_NAME} --query KeyMaterial --output text > ~/.ssh/${KEY_MATERIAL_FILE}
 ```
 
 ## Key Pairが作成されたことを確認
@@ -731,7 +607,7 @@ aws iam create-role --role-name ${ROLE_NAME} --assume-role-policy-document file:
 ## IAMロールにManaged Policyをアタッチ
 
 ```
-POLICY_ARN='arn:aws:iam::aws:policy/AmazonRedshiftFullAccess'
+POLICY_ARN='arn:aws:iam::aws:policy/IAMFullAccess'
 aws iam attach-role-policy --role-name ${ROLE_NAME} --policy-arn ${POLICY_ARN}
 ```
 
@@ -749,8 +625,8 @@ aws iam list-attached-role-policies --role-name ${ROLE_NAME}
 {
     "AttachedPolicies": [
         {
-            "PolicyName": "AmazonRedshiftFullAccess",
-            "PolicyArn": "arn:aws:iam::aws:policy/AmazonRedshiftFullAccess"
+            "PolicyName": "IAMFullAccess",
+            "PolicyArn": "arn:aws:iam::aws:policy/IAMFullAccess"
         }
     ]
 }
@@ -1039,6 +915,95 @@ aws ec2 describe-instances --instance-ids ${INSTANCE_ID}
 ```
 PUBLIC_IP_ADDRESS=`aws ec2 describe-instances --instance-ids ${INSTANCE_ID} --query Reservations[0].Instances[0].PublicIpAddress | sed s/\"//g`
 echo ${PUBLIC_IP_ADDRESS}
+```
+
+## Security Groupの名前を設定（Redshiftクラスタ用）
+
+```
+SG_GROUP_NAME_REDSHIFT='Redshift'
+SG_DESCRIPTION_REDSHIFT='JAWS-UG CLI at Co-Edo'
+```
+
+## パラメータの確認
+
+```
+cat << ETX
+
+   SG_GROUP_NAME: ${SG_GROUP_NAME_REDSHIFT}
+   SG_DESCRIPTION: ${SG_DESCRIPTION_REDSHIFT}
+
+ETX
+```
+
+```
+
+   SG_GROUP_NAME: Redshift
+   SG_DESCRIPTION: JAWS-UG CLI at Co-Edo
+
+```
+
+## ユーザ作成用のEC2インスタンスに設定するSecurity Groupを作成
+
+```
+SG_ID_REDSHIFT=`aws ec2 create-security-group --group-name ${SG_GROUP_NAME_REDSHIFT} --description "${SG_DESCRIPTION_REDSHIFT}" --vpc-id ${VPC_ID} --query GroupId | sed s/\"//g`
+echo ${SG_ID_REDSHIFT}
+```
+
+```
+sg-********
+```
+
+## 作成したSecurity Groupを確認
+
+（アウトバウンドの通信のみ全て許可する設定のみ、がデフォルト）
+
+```
+aws ec2 describe-security-groups --group-ids ${SG_ID_REDSHIFT}
+```
+
+```
+{
+    "SecurityGroups": [
+        {
+            "IpPermissionsEgress": [
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "UserIdGroupPairs": [],
+                    "PrefixListIds": []
+                }
+            ],
+            "Description": "JAWS-UG CLI at Co-Edo",
+            "IpPermissions": [],
+            "GroupName": "Redshift",
+            "VpcId": "vpc-********",
+            "OwnerId": "************",
+            "GroupId": "sg-********"
+        }
+    ]
+}
+```
+
+## インバウンドのルールを追加
+
+Redshiftへの接続を許可します。
+
+```
+aws ec2 authorize-security-group-ingress --group-id ${SG_ID_REDSHIFT} --protocol 'tcp' --port 5439 --cidr ${PUBLIC_IP_ADDRESS}/32
+```
+
+## 追加されたルールを確認
+
+```
+aws ec2 describe-security-groups --group-ids ${SG_ID_REDSHIFT}
+```
+
+```
+
 ```
 
 以上

@@ -171,6 +171,22 @@ aws iam create-user --user-name ${IAM_USER_NAME}
 }
 ```
 
+ポリシーのアタッチ
+
+```
+aws iam attach-user-policy --user-name ${IAM_USER_NAME} --policy-arn "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+```
+
+確認
+
+```
+aws iam list-attached-user-policies --user-name ${IAM_USER_NAME}
+```
+
+```
+
+```
+
 アクセスキーの作成
 
 ```
