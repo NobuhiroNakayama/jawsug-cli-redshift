@@ -1,7 +1,6 @@
 # このハンズオンについて
 
 - このハンズオンでは、Redshiftのクラスターとそのクラスタに対してクエリを発行するインスタンスの作成を実施します。
-- 今回のハンズオンでは、クラスタの運用に関するコマンドは実行しません。（クラスタの作成、簡単なクエリの発行、クラスタの削除を行います。）
 - クエリの発行には、「psql」を利用します。本手順では、Amazon Linux上へのインストールと利用方法は説明します。
 
 
@@ -16,7 +15,7 @@ aws --version
 ```
 
 ```
-aws-cli/1.10.17 Python/2.7.10 Linux/4.1.19-24.31.amzn1.x86_64 botocore/1.4.8
+aws-cli/1.10.19 Python/2.7.10 Linux/4.4.5-15.26.amzn1.x86_64 botocore/1.4.10
 ```
 
 ## 必要な権限
@@ -27,7 +26,7 @@ aws-cli/1.10.17 Python/2.7.10 Linux/4.1.19-24.31.amzn1.x86_64 botocore/1.4.8
 - RedShiftに関するフルコントロール権限
 - IAMに関するフルコントロール権限
 - S3に関するフルコントロール権限
-
+- STSに関するフルコントロール権限
 
 # 0. 準備
 
@@ -79,8 +78,7 @@ ETX
 ## VPCを作成
 
 ```
-VPC_ID=`aws ec2 create-vpc --cidr-block ${CIDR_BLOCK} --query Vpc.VpcId | sed s/\"//g`
-echo ${VPC_ID}
+VPC_ID=`aws ec2 create-vpc --cidr-block ${CIDR_BLOCK} --query Vpc.VpcId | sed s/\"//g` && echo ${VPC_ID}
 ```
 
 ```
@@ -113,8 +111,7 @@ aws ec2 describe-vpcs --vpc-ids ${VPC_ID}
 ## インターネットゲートウェイの作成
 
 ```
-IGW_ID=`aws ec2 create-internet-gateway --query InternetGateway.InternetGatewayId | sed s/\"//g`
-echo ${IGW_ID}
+IGW_ID=`aws ec2 create-internet-gateway --query InternetGateway.InternetGatewayId | sed s/\"//g` && echo ${IGW_ID}
 ```
 
 ```
@@ -223,8 +220,7 @@ ETX
 ## サブネットを作成
 
 ```
-SUBNET_A_ID=`aws ec2 create-subnet --vpc-id ${VPC_ID} --cidr-block ${CIDR_BLOCK_SUBNET_A} --availability-zone ${AWS_DEFAULT_REGION}a --query Subnet.SubnetId | sed s/\"//g`
-echo ${SUBNET_A_ID}
+SUBNET_A_ID=`aws ec2 create-subnet --vpc-id ${VPC_ID} --cidr-block ${CIDR_BLOCK_SUBNET_A} --availability-zone ${AWS_DEFAULT_REGION}a --query Subnet.SubnetId | sed s/\"//g` && echo ${SUBNET_A_ID}
 ```
 
 ## 作成したサブネットを確認
@@ -257,8 +253,7 @@ aws ec2 describe-subnets --subnet-ids ${SUBNET_A_ID}
 ## 作成したVPCのデフォルトのルートテーブルIDを確認
 
 ```
-ROUTE_TABLE_ID=`aws ec2 describe-route-tables --query RouteTables[?VpcId==\'${VPC_ID}\'].RouteTableId | jq ".[]" | sed s/\"//g`
-echo ${ROUTE_TABLE_ID}
+ROUTE_TABLE_ID=`aws ec2 describe-route-tables --query RouteTables[?VpcId==\'${VPC_ID}\'].RouteTableId | jq ".[]" | sed s/\"//g` && echo ${ROUTE_TABLE_ID}
 ```
 
 ## パラメータを確認
@@ -359,8 +354,7 @@ ETX
 ## ユーザ作成用のEC2インスタンスに設定するSecurity Groupを作成
 
 ```
-SG_ID_SSH=`aws ec2 create-security-group --group-name ${SG_GROUP_NAME_SSH} --description "${SG_DESCRIPTION_SSH}" --vpc-id ${VPC_ID} --query GroupId | sed s/\"//g`
-echo ${SG_ID_SSH}
+SG_ID_SSH=`aws ec2 create-security-group --group-name ${SG_GROUP_NAME_SSH} --description "${SG_DESCRIPTION_SSH}" --vpc-id ${VPC_ID} --query GroupId | sed s/\"//g` && echo ${SG_ID_SSH}
 ```
 
 ```
@@ -471,7 +465,7 @@ KEY_PAIR_NAME='Redshift'
 KEY_MATERIAL_FILE='redshift.pem'
 ```
 
-## 同名のKey Pairおよび秘密鍵ファイルが存在しないことを確認
+## 同名のKey Pairが存在しないことを確認
 
 ```
 aws ec2 describe-key-pairs --key-names ${KEY_PAIR_NAME}
@@ -480,6 +474,8 @@ aws ec2 describe-key-pairs --key-names ${KEY_PAIR_NAME}
 ```
 A client error (InvalidKeyPair.NotFound) occurred when calling the DescribeKeyPairs operation: The key pair 'Redshift' does not exist
 ```
+
+## 同名の秘密鍵ファイルが存在しないことを確認
 
 ```
 ls -al ~/.ssh | grep ${KEY_MATERIAL_FILE}
@@ -531,8 +527,17 @@ aws ec2 describe-key-pairs --key-names ${KEY_PAIR_NAME}
 cat ~/.ssh/${KEY_MATERIAL_FILE}
 ```
 
+## 権限の変更
+
+```
+chmod 600 ~/.ssh/${KEY_MATERIAL_FILE}
+```
+
 
 # 7. インスタンスプロファイルの作成
+
+EC2インスタンス上でIAMユーザの作成と権限の付与を行います。
+そのための権限付与をここで行います。
 
 ## 同名のロールがないことを確認
 
@@ -607,8 +612,12 @@ aws iam create-role --role-name ${ROLE_NAME} --assume-role-policy-document file:
 ## IAMロールにManaged Policyをアタッチ
 
 ```
-POLICY_ARN='arn:aws:iam::aws:policy/IAMFullAccess'
-aws iam attach-role-policy --role-name ${ROLE_NAME} --policy-arn ${POLICY_ARN}
+IAM_POLICY_ARN='arn:aws:iam::aws:policy/IAMFullAccess'
+aws iam attach-role-policy --role-name ${ROLE_NAME} --policy-arn ${IAM_POLICY_ARN}
+RED_POLICY_ARN='arn:aws:iam::aws:policy/AmazonRedshiftFullAccess'
+aws iam attach-role-policy --role-name ${ROLE_NAME} --policy-arn ${RED_POLICY_ARN}
+S3_POLICY_ARN='arn:aws:iam::aws:policy/AmazonS3FullAccess'
+aws iam attach-role-policy --role-name ${ROLE_NAME} --policy-arn ${S3_POLICY_ARN}
 ```
 
 ```
@@ -627,6 +636,14 @@ aws iam list-attached-role-policies --role-name ${ROLE_NAME}
         {
             "PolicyName": "IAMFullAccess",
             "PolicyArn": "arn:aws:iam::aws:policy/IAMFullAccess"
+        },
+        {
+            "PolicyName": "AmazonS3FullAccess",
+            "PolicyArn": "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+        },
+        {
+            "PolicyName": "AmazonRedshiftFullAccess",
+            "PolicyArn": "arn:aws:iam::aws:policy/AmazonRedshiftFullAccess"
         }
     ]
 }
@@ -737,8 +754,7 @@ aws iam get-instance-profile --instance-profile-name ${ROLE_NAME}
 Amazon LinuxのAMIのうち、作成日が最新のAMIを利用します。
 
 ```
-AMI_ID=`aws ec2 describe-images --owners amazon --query Images[?Name==\'amzn-ami-hvm-2016.03.0.x86_64-gp2\'].ImageId | jq ".[]" | sed s/\"//g`
-echo ${AMI_ID}
+AMI_ID=`aws ec2 describe-images --owners amazon --query Images[?Name==\'amzn-ami-hvm-2016.03.0.x86_64-gp2\'].ImageId | jq ".[]" | sed s/\"//g` && echo ${AMI_ID}
 ```
 
 ## パラメータを確認
@@ -782,9 +798,7 @@ ETX
 ## EC2インスタンスを作成
 
 ```
-INSTANCE_ID=`aws ec2 run-instances --image-id ${AMI_ID} --key-name ${KEY_PAIR_NAME} --security-group-ids ${SG_ID_SSH} --instance-type 't2.micro' --subnet-id ${SUBNET_A_ID} --associate-public-ip-address --iam-instance-profile Arn=arn:aws:iam::${AWS_ID}:instance-profile/${ROLE_NAME} --query Instances[0].InstanceId | sed s/\"//g`
-
-echo ${INSTANCE_ID}
+INSTANCE_ID=`aws ec2 run-instances --image-id ${AMI_ID} --key-name ${KEY_PAIR_NAME} --security-group-ids ${SG_ID_SSH} --instance-type 't2.micro' --subnet-id ${SUBNET_A_ID} --associate-public-ip-address --iam-instance-profile Arn=arn:aws:iam::${AWS_ID}:instance-profile/${ROLE_NAME} --query Instances[0].InstanceId | sed s/\"//g` && echo ${INSTANCE_ID}
 ```
 
 ```
@@ -913,8 +927,11 @@ aws ec2 describe-instances --instance-ids ${INSTANCE_ID}
 ## パブリックIPを確認
 
 ```
-PUBLIC_IP_ADDRESS=`aws ec2 describe-instances --instance-ids ${INSTANCE_ID} --query Reservations[0].Instances[0].PublicIpAddress | sed s/\"//g`
-echo ${PUBLIC_IP_ADDRESS}
+PUBLIC_IP_ADDRESS=`aws ec2 describe-instances --instance-ids ${INSTANCE_ID} --query Reservations[0].Instances[0].PublicIpAddress | sed s/\"//g` && echo ${PUBLIC_IP_ADDRESS}
+```
+
+```
+**.**.**.**
 ```
 
 ## Security Groupの名前を設定（Redshiftクラスタ用）
@@ -945,8 +962,7 @@ ETX
 ## ユーザ作成用のEC2インスタンスに設定するSecurity Groupを作成
 
 ```
-SG_ID_REDSHIFT=`aws ec2 create-security-group --group-name ${SG_GROUP_NAME_REDSHIFT} --description "${SG_DESCRIPTION_REDSHIFT}" --vpc-id ${VPC_ID} --query GroupId | sed s/\"//g`
-echo ${SG_ID_REDSHIFT}
+SG_ID_REDSHIFT=`aws ec2 create-security-group --group-name ${SG_GROUP_NAME_REDSHIFT} --description "${SG_DESCRIPTION_REDSHIFT}" --vpc-id ${VPC_ID} --query GroupId | sed s/\"//g` && echo ${SG_ID_REDSHIFT}
 ```
 
 ```
@@ -996,6 +1012,10 @@ Redshiftへの接続を許可します。
 aws ec2 authorize-security-group-ingress --group-id ${SG_ID_REDSHIFT} --protocol 'tcp' --port 5439 --cidr ${PUBLIC_IP_ADDRESS}/32
 ```
 
+```
+
+```
+
 ## 追加されたルールを確認
 
 ```
@@ -1003,7 +1023,43 @@ aws ec2 describe-security-groups --group-ids ${SG_ID_REDSHIFT}
 ```
 
 ```
-
+{
+    "SecurityGroups": [
+        {
+            "IpPermissionsEgress": [
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "UserIdGroupPairs": [],
+                    "PrefixListIds": []
+                }
+            ],
+            "Description": "JAWS-UG CLI at Co-Edo",
+            "IpPermissions": [
+                {
+                    "PrefixListIds": [],
+                    "FromPort": 5439,
+                    "IpRanges": [
+                        {
+                            "CidrIp": "**.**.**.**/32"
+                        }
+                    ],
+                    "ToPort": 5439,
+                    "IpProtocol": "tcp",
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "GroupName": "Redshift",
+            "VpcId": "vpc-********",
+            "OwnerId": "************",
+            "GroupId": "sg-********"
+        }
+    ]
+}
 ```
 
 以上

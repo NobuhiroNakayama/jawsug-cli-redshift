@@ -1,54 +1,391 @@
-# このハンズオンについて
-
-- このハンズオンでは、Redshiftのクラスターとそのクラスタに対してクエリを発行するインスタンスの作成を実施します。
-- 今回のハンズオンでは、クラスタの運用に関するコマンドは実行しません。（クラスタの作成、簡単なクエリの発行、クラスタの削除を行います。）
-- クエリの発行には、「psql」を利用します。本手順では、Amazon Linux上へのインストールと利用方法は説明します。
 
 
-# 前提条件
 
-## バージョン確認
 
-このハンズオンは以下のバージョンで動作確認を行いました。
+
+## パラメータの確認
+
+前の章までに設定したパラメータのうち、この章で利用するパラメータは以下の通りです。
 
 ```
-aws --version
+cat << ETX
+
+
+
+ETX
 ```
 
-```
-aws-cli/1.10.17 Python/2.7.10 Linux/4.1.19-24.31.amzn1.x86_64 botocore/1.4.8
-```
-
-## 必要な権限
-
-作業にあたっては、以下の権限を有したIAMユーザもしくはIAMロールを利用してください。
-
-- EC2に対するフルコントロール権限
-- RedShiftに関するフルコントロール権限
-- IAMに関するフルコントロール権限
-- S3に関するフルコントロール権限
 
 
-# 0. 準備
 
-## リージョンを指定
+
+
+# 2. EC2インスタンスの削除
+
+## EC2インスタンスを削除
+
+パラメータを確認
 
 ```
-export AWS_DEFAULT_REGION='ap-northeast-1'
-```
+cat << ETX
 
-## 資格情報を確認
+    INSTANCE_ID: ${INSTANCE_ID}
 
-```
-aws configure list
+ETX
 ```
 
 ```
-Name                    Value             Type    Location
-----                    -----             ----    --------
-profile                <not set>             None    None
-access_key     ****************RDPA         iam-role
-secret_key     ****************9GA8         iam-role
-region           ap-northeast-1              env    AWS_DEFAULT_REGION
+
 ```
 
+削除
+
+```
+aws ec2 terminate-instances --instance-ids ${INSTANCE_ID}
+```
+
+```
+
+```
+
+確認
+Stateがshutting-downやterminatedであればOK
+
+```
+aws ec2 describe-instances --instance-ids ${INSTANCE_ID}
+```
+
+```
+{
+    "Reservations": [
+        {
+            "OwnerId": "************",
+            "ReservationId": "r-********",
+            "Groups": [],
+            "Instances": [
+                {
+                    "Monitoring": {
+                        "State": "disabled"
+                    },
+                    "PublicDnsName": "",
+                    "Platform": "windows",
+                    "State": {
+                        "Code": 48,
+                        "Name": "terminated"
+                    },
+                    "EbsOptimized": false,
+                    "LaunchTime": "2015-10-17T13:28:19.000Z",
+                    "ProductCodes": [],
+                    "StateTransitionReason": "User initiated (2015-10-17 16:00:38 GMT)",
+                    "InstanceId": "i-********",
+                    "ImageId": "ami-4623a846",
+                    "PrivateDnsName": "",
+                    "KeyName": "UserManagementServer",
+                    "SecurityGroups": [],
+                    "ClientToken": "",
+                    "InstanceType": "t2.medium",
+                    "NetworkInterfaces": [],
+                    "Placement": {
+                        "Tenancy": "default",
+                        "GroupName": "",
+                        "AvailabilityZone": "us-west-2a"
+                    },
+                    "Hypervisor": "xen",
+                    "BlockDeviceMappings": [],
+                    "Architecture": "x86_64",
+                    "StateReason": {
+                        "Message": "Client.UserInitiatedShutdown: User initiated shutdown",
+                        "Code": "Client.UserInitiatedShutdown"
+                    },
+                    "RootDeviceName": "/dev/sda1",
+                    "VirtualizationType": "hvm",
+                    "RootDeviceType": "ebs",
+                    "AmiLaunchIndex": 0
+                }
+            ]
+        }
+    ]
+}
+```
+
+## 4. インスタンスプロファイルおよびIAMロールの削除
+
+確認（インスタンスプロファイル）
+
+```
+aws iam get-instance-profile --instance-profile-name ${}
+```
+
+```
+
+```
+
+インスタンスプロファイルからIAMロールを削除
+
+```
+aws iam remove-role-from-instance-profile --instance-profile-name ${} --role-name ${}
+```
+
+インスタンスプロファイルの削除
+
+```
+aws iam delete-instance-profile --instance-profile-name ${}
+```
+
+```
+（返値無し）
+```
+
+
+確認（Instance Profile）
+
+```
+aws iam get-instance-profile --instance-profile-name ${}
+```
+
+```
+
+```
+
+
+確認（IAM Role）
+
+```
+aws iam list-attached-role-policies --role-name ${}
+```
+
+```
+
+```
+
+デタッチ
+
+```
+aws iam detach-role-policy --role-name ${} --policy-arn ${}
+aws iam detach-role-policy --role-name ${} --policy-arn ${}
+aws iam detach-role-policy --role-name ${} --policy-arn ${}
+```
+
+```
+（返値無し）
+```
+
+
+削除
+
+```
+aws iam delete-role --role-name ${}
+```
+
+```
+（返値無し）
+```
+
+
+確認
+
+```
+aws iam list-attached-role-policies --role-name ${}
+```
+
+```
+
+```
+
+## 5. Key Pairおよび秘密鍵ファイルの削除
+
+確認
+
+```
+aws ec2 describe-key-pairs --key-names ${KEY_PAIR_NAME}
+
+ls -al ~/.ssh | grep ${KEY_MATERIAL_FILE}
+```
+
+```
+
+```
+
+削除
+
+```
+aws ec2 delete-key-pair --key-name ${KEY_PAIR_NAME}
+
+rm ~/.ssh/${KEY_MATERIAL_FILE}
+```
+
+```
+（返値無し）
+```
+
+確認
+
+```
+aws ec2 describe-key-pairs --key-names ${KEY_PAIR_NAME}
+
+ls -al ~/.ssh | grep ${KEY_MATERIAL_FILE}
+```
+
+```
+
+
+
+```
+
+## 6. VPCおよびVPCに関連するリソースの削除
+
+Management ConsoleからVPCを削除すると、関連するリソースも一括で削除してくれます。
+時間が無い方は、Management Consoleから削除しましょう。
+
+### セキュリティグループの削除
+
+確認
+
+```
+aws ec2 describe-security-groups --group-ids ${}
+aws ec2 describe-security-groups --group-ids ${}
+```
+
+```
+
+```
+
+削除
+
+```
+aws ec2 delete-security-group --group-id ${}
+aws ec2 delete-security-group --group-id ${}
+```
+
+```
+（返値無し）
+```
+
+確認
+
+```
+aws ec2 describe-security-groups --group-ids ${}
+aws ec2 describe-security-groups --group-ids ${}
+```
+
+```
+
+```
+
+### Subnetの削除
+
+確認
+
+```
+aws ec2 describe-subnets --subnet-ids ${SUBNET_A_ID}
+```
+
+```
+
+```
+
+削除
+
+```
+aws ec2 delete-subnet --subnet-id ${SUBNET_A_ID}
+```
+
+```
+（返値無し）
+```
+
+確認
+
+```
+aws ec2 describe-subnets --subnet-ids ${SUBNET_A_ID}
+```
+
+```
+A client error (InvalidSubnetID.NotFound) occurred when calling the DescribeSubnets operation: The subnet ID 'subnet-********' does not exist
+```
+
+### Internet Gatewayのデタッチ、削除
+
+確認
+
+```
+aws ec2 describe-internet-gateways --internet-gateway-ids ${IGW_ID}
+```
+
+```
+
+```
+
+デタッチ
+
+```
+aws ec2 detach-internet-gateway --internet-gateway-id ${IGW_ID} --vpc-id ${VPC_ID}
+```
+
+```
+（返値無し）
+```
+
+確認
+
+```
+aws ec2 describe-internet-gateways --internet-gateway-ids ${IGW_ID}
+```
+
+```
+
+```
+
+削除
+
+```
+aws ec2 delete-internet-gateway --internet-gateway-id ${IGW_ID}
+```
+
+```
+（返値無し）
+```
+
+確認
+
+```
+aws ec2 describe-internet-gateways --internet-gateway-ids ${IGW_ID}
+```
+
+```
+A client error (InvalidInternetGatewayID.NotFound) occurred when calling the DescribeInternetGateways operation: The internetGateway ID 'igw-********' does not exist
+```
+
+### VPCの削除
+
+確認
+
+```
+aws ec2 describe-vpcs --vpc-ids ${VPC_ID}
+```
+
+```
+
+```
+
+削除
+
+```
+aws ec2 delete-vpc --vpc-id ${VPC_ID}
+```
+
+```
+（返値無し）
+```
+
+確認
+
+```
+aws ec2 describe-vpcs --vpc-ids ${VPC_ID}
+```
+
+```
+A client error (InvalidVpcID.NotFound) occurred when calling the DescribeVpcs operation: The vpc ID 'vpc-********' does not exist
+```
+
+以上です。お疲れ様でした。

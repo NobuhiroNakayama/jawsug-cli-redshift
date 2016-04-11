@@ -1,57 +1,21 @@
-# このハンズオンについて
-
-- このハンズオンでは、Redshiftのクラスターとそのクラスタに対してクエリを発行するインスタンスの作成を実施します。
-- 今回のハンズオンでは、クラスタの運用に関するコマンドは実行しません。（クラスタの作成、簡単なクエリの発行、クラスタの削除を行います。）
-- クエリの発行には、「psql」を利用します。本手順では、Amazon Linux上へのインストールと利用方法は説明します。
 
 
-# 前提条件
 
-## バージョン確認
 
-このハンズオンは以下のバージョンで動作確認を行いました。
+
+
+## パラメータの確認
+
+前の章までに設定したパラメータのうち、この章で利用するパラメータは以下の通りです。
 
 ```
-aws --version
+cat << ETX
+
+    KEY_MATERIAL_FILE:${KEY_MATERIAL_FILE}
+    PUBLIC_IP_ADDRESS:${PUBLIC_IP_ADDRESS}
+
+ETX
 ```
-
-```
-aws-cli/1.10.17 Python/2.7.10 Linux/4.1.19-24.31.amzn1.x86_64 botocore/1.4.8
-```
-
-## 必要な権限
-
-作業にあたっては、以下の権限を有したIAMユーザもしくはIAMロールを利用してください。
-
-- EC2に対するフルコントロール権限
-- RedShiftに関するフルコントロール権限
-- IAMに関するフルコントロール権限
-- S3に関するフルコントロール権限
-
-
-# 0. 準備
-
-## リージョンを指定
-
-```
-export AWS_DEFAULT_REGION='ap-northeast-1'
-```
-
-## 資格情報を確認
-
-```
-aws configure list
-```
-
-```
-Name                    Value             Type    Location
-----                    -----             ----    --------
-profile                <not set>             None    None
-access_key     ****************RDPA         iam-role
-secret_key     ****************9GA8         iam-role
-region           ap-northeast-1              env    AWS_DEFAULT_REGION
-```
-
 
 
 # 1．クライアントへの接続
@@ -73,14 +37,35 @@ http://docs.aws.amazon.com/ja_jp/redshift/latest/mgmt/connecting-from-psql.html
 PostgreSQLのインストール
 
 ```
-sudo yum install postgresql-server
+sudo yum install postgresql-server -y
+sudo yum install jq -y
+```
+
+リージョンを指定
+
+```
+export AWS_DEFAULT_REGION='ap-northeast-1'
+```
+
+資格情報を確認
+
+```
+aws configure list
+```
+
+```
+Name                    Value             Type    Location
+----                    -----             ----    --------
+profile                <not set>             None    None
+access_key     ****************RDPA         iam-role
+secret_key     ****************9GA8         iam-role
+region           ap-northeast-1              env    AWS_DEFAULT_REGION
 ```
 
 エンドポイントの確認
 
 ```
-REDSHIFT_ENDPOINT=`aws redshift describe-clusters --query Clusters[?ClusterIdentifier==\'mycluster\'] | jq .[].ClusterNodes | jq -r .[].PrivateIPAddress`
-echo ${REDSHIFT_ENDPOINT}
+REDSHIFT_ENDPOINT=`aws redshift describe-clusters --query Clusters[?ClusterIdentifier==\'mycluster\'] | jq .[].Endpoint | jq -r .Address` && echo ${REDSHIFT_ENDPOINT}
 ```
 
 ユーザ名、DB名、ポート番号の確認
@@ -177,6 +162,10 @@ aws iam create-user --user-name ${IAM_USER_NAME}
 aws iam attach-user-policy --user-name ${IAM_USER_NAME} --policy-arn "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
 ```
 
+```
+
+```
+
 確認
 
 ```
@@ -184,15 +173,21 @@ aws iam list-attached-user-policies --user-name ${IAM_USER_NAME}
 ```
 
 ```
-
+{
+    "AttachedPolicies": [
+        {
+            "PolicyName": "AmazonS3ReadOnlyAccess",
+            "PolicyArn": "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+        }
+    ]
+}
 ```
 
 アクセスキーの作成
 
 ```
 RESPONSE_FILE="access_key.json"
-aws iam create-access-key --user-name ${IAM_USER_NAME} > ${RESPONSE_FILE}
-cat ${RESPONSE_FILE}
+aws iam create-access-key --user-name ${IAM_USER_NAME} > ${RESPONSE_FILE} && cat ${RESPONSE_FILE}
 ```
 
 アクセスキーの取得
@@ -218,6 +213,12 @@ cat << ETX
 ETX
 ```
 
+```
+
+    ACCESS_KEY_ID:********************
+    SECRET_ACCESS_KEY:****************************************
+
+```
 
 # 4．データのインポート
 
@@ -231,7 +232,6 @@ http://docs.aws.amazon.com/ja_jp/redshift/latest/dg/c_sampledb.html
 LOAD_SAMPLE_DATA_FILE='load_sample_data.txt'
 
 cat << EOF > ${LOAD_SAMPLE_DATA_FILE}
-
 copy users from 's3://awssampledbuswest2/tickit/allusers_pipe.txt' 
 credentials 'aws_access_key_id=${ACCESS_KEY_ID};aws_secret_access_key=${SECRET_ACCESS_KEY}' 
 delimiter '|' region 'us-west-2';
@@ -355,6 +355,7 @@ create table sales(
 ```
 
 データのロード（結果）
+（アクセスキーを含んだcopyコマンドを貼り付けます。）
 
 ```
 INFO:  Load into table 'users' completed, 49990 record(s) loaded successfully.
@@ -376,6 +377,43 @@ select count(*) from date;
 select count(*) from event;
 select count(*) from listing;
 select count(*) from sales;
+```
+
+```
+ count
+-------
+ 49990
+(1 row)
+
+ count
+-------
+   202
+(1 row)
+
+ count
+-------
+    11
+(1 row)
+
+ count
+-------
+   365
+(1 row)
+
+ count
+-------
+  8798
+(1 row)
+
+ count
+--------
+ 192497
+(1 row)
+
+ count
+--------
+ 172456
+(1 row)
 ```
 
 以上
