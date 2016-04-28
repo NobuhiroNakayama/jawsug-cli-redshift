@@ -15,7 +15,8 @@
 ```
 cat << ETX
 
-    SUBNET_A_ID:${SUBNET_A_ID}    
+    SUBNET_A_ID:${SUBNET_A_ID}
+    SG_ID_REDSHIFT:${SG_ID_REDSHIFT}
 
 ETX
 ```
@@ -33,7 +34,7 @@ CLUSTER_SUBNET_GROUP_DESCRIPTION="Subnet Group for Redshift"
 同名のSubnet Groupが存在しないことを確認
 
 ```
-aws redshift describe-cluster-subnet-groups　--cluster-subnet-group-name ${CLUSTER_SUBNET_GROUP_NAME}
+aws redshift describe-cluster-subnet-groups --cluster-subnet-group-name ${CLUSTER_SUBNET_GROUP_NAME}
 ```
 
 ```

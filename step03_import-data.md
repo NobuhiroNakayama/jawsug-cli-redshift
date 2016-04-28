@@ -63,6 +63,7 @@ region           ap-northeast-1              env    AWS_DEFAULT_REGION
 ```
 
 エンドポイントの確認
+（クラスタを作成中の場合はしばらくお待ちください）
 
 ```
 REDSHIFT_ENDPOINT=`aws redshift describe-clusters --query Clusters[?ClusterIdentifier==\'mycluster\'] | jq .[].Endpoint | jq -r .Address` && echo ${REDSHIFT_ENDPOINT}
@@ -74,7 +75,6 @@ REDSHIFT_ENDPOINT=`aws redshift describe-clusters --query Clusters[?ClusterIdent
 DB_NAME="mydb"
 PORT="5439"
 MASTER_USER_NAME="awsuser"
-MASTER_USER_PASSWORD="Pa55w0rd"
 ```
 
 パラメータの確認
@@ -86,7 +86,6 @@ cat << ETX
     DB_NAME:${DB_NAME}
     PORT:${PORT}
     MASTER_USER_NAME:${MASTER_USER_NAME}
-    MASTER_USER_PASSWORD:${MASTER_USER_PASSWORD}
 
 ETX
 ```
@@ -163,8 +162,9 @@ aws iam attach-user-policy --user-name ${IAM_USER_NAME} --policy-arn "arn:aws:ia
 ```
 
 ```
-
+（返値無し）
 ```
+
 
 確認
 
@@ -189,6 +189,19 @@ aws iam list-attached-user-policies --user-name ${IAM_USER_NAME}
 RESPONSE_FILE="access_key.json"
 aws iam create-access-key --user-name ${IAM_USER_NAME} > ${RESPONSE_FILE} && cat ${RESPONSE_FILE}
 ```
+
+```
+{
+    "AccessKey": {
+        "UserName": "redshift_user",
+        "Status": "Active",
+        "CreateDate": "2016-04-28T10:50:04.056Z",
+        "SecretAccessKey": ":****************************************",
+        "AccessKeyId": ":********************"
+    }
+}
+```
+
 
 アクセスキーの取得
 
@@ -270,6 +283,10 @@ EOF
 cat ${LOAD_SAMPLE_DATA_FILE}
 ```
 
+```
+（省略）
+```
+
 クラスタに接続
 （パスワード入力を要求されます）
 
@@ -278,6 +295,7 @@ psql -h ${REDSHIFT_ENDPOINT} -U ${MASTER_USER_NAME} -d ${DB_NAME} -p ${PORT}
 ```
 
 テーブルを作成
+（「CREATE TABLE」が表示されればOKです）
 
 ```
 create table users(
