@@ -88,6 +88,136 @@ aws redshift create-cluster-subnet-group --cluster-subnet-group-name ${CLUSTER_S
 }
 ```
 
+# 2. Security Groupの作成
+
+## Security Groupの名前を設定（Redshiftクラスタ用）
+
+```
+SG_GROUP_NAME_REDSHIFT='Redshift'
+SG_DESCRIPTION_REDSHIFT='JAWS-UG CLI at Co-Edo'
+```
+
+## パラメータの確認
+
+```
+cat << ETX
+
+   SG_GROUP_NAME: ${SG_GROUP_NAME_REDSHIFT}
+   SG_DESCRIPTION: ${SG_DESCRIPTION_REDSHIFT}
+
+ETX
+```
+
+```
+
+   SG_GROUP_NAME: Redshift
+   SG_DESCRIPTION: JAWS-UG CLI at Co-Edo
+
+```
+
+## Redshiftのクラスターに設定するSecurity Groupを作成
+
+```
+SG_ID_REDSHIFT=`aws ec2 create-security-group --group-name ${SG_GROUP_NAME_REDSHIFT} --description "${SG_DESCRIPTION_REDSHIFT}" --vpc-id ${VPC_ID} --query GroupId | sed s/\"//g` && echo ${SG_ID_REDSHIFT}
+```
+
+```
+sg-********
+```
+
+## 作成したSecurity Groupを確認
+
+（アウトバウンドの通信のみ全て許可する設定のみ、がデフォルト）
+
+```
+aws ec2 describe-security-groups --group-ids ${SG_ID_REDSHIFT}
+```
+
+```
+{
+    "SecurityGroups": [
+        {
+            "IpPermissionsEgress": [
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "UserIdGroupPairs": [],
+                    "PrefixListIds": []
+                }
+            ],
+            "Description": "JAWS-UG CLI at Co-Edo",
+            "IpPermissions": [],
+            "GroupName": "Redshift",
+            "VpcId": "vpc-********",
+            "OwnerId": "************",
+            "GroupId": "sg-********"
+        }
+    ]
+}
+```
+
+## インバウンドのルールを追加
+
+Redshiftへの接続を許可します。
+
+```
+aws ec2 authorize-security-group-ingress --group-id ${SG_ID_REDSHIFT} --protocol 'tcp' --port 5439 --cidr ${PUBLIC_IP_ADDRESS}/32
+```
+
+```
+（返値無し）
+```
+
+## 追加されたルールを確認
+
+```
+aws ec2 describe-security-groups --group-ids ${SG_ID_REDSHIFT}
+```
+
+```
+{
+    "SecurityGroups": [
+        {
+            "IpPermissionsEgress": [
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "UserIdGroupPairs": [],
+                    "PrefixListIds": []
+                }
+            ],
+            "Description": "JAWS-UG CLI at Co-Edo",
+            "IpPermissions": [
+                {
+                    "PrefixListIds": [],
+                    "FromPort": 5439,
+                    "IpRanges": [
+                        {
+                            "CidrIp": "**.**.**.**/32"
+                        }
+                    ],
+                    "ToPort": 5439,
+                    "IpProtocol": "tcp",
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "GroupName": "Redshift",
+            "VpcId": "vpc-********",
+            "OwnerId": "************",
+            "GroupId": "sg-********"
+        }
+    ]
+}
+```
+
 
 # 2．クラスタの作成
 

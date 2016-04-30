@@ -185,6 +185,10 @@ aws s3 rb s3://${BUCKET_NAME}
 remove_bucket: s3://jawsug-cli-unloaded-data-2016-04-28/
 ```
 
+# IAMユーザの削除
+
+
+
 
 # EC2インスタンスからログアウト
 
