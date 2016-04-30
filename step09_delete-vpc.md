@@ -35,7 +35,7 @@ ETX
 ```
 
 ```
-
+i-********
 ```
 
 削除
@@ -45,10 +45,25 @@ aws ec2 terminate-instances --instance-ids ${INSTANCE_ID}
 ```
 
 ```
-
+{
+    "TerminatingInstances": [
+        {
+            "InstanceId": "i-7b972de4",
+            "CurrentState": {
+                "Code": 32,
+                "Name": "shutting-down"
+            },
+            "PreviousState": {
+                "Code": 16,
+                "Name": "running"
+            }
+        }
+    ]
+}
 ```
 
 確認
+
 Stateがshutting-downやterminatedであればOK
 
 ```
@@ -113,23 +128,57 @@ aws ec2 describe-instances --instance-ids ${INSTANCE_ID}
 確認（インスタンスプロファイル）
 
 ```
-aws iam get-instance-profile --instance-profile-name ${}
+aws iam get-instance-profile --instance-profile-name ${ROLE_NAME}
 ```
 
 ```
-
+{
+    "InstanceProfile": {
+        "InstanceProfileId": "A********************",
+        "Roles": [
+            {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Action": "sts:AssumeRole",
+                            "Principal": {
+                                "Service": "ec2.amazonaws.com"
+                            },
+                            "Effect": "Allow",
+                            "Sid": ""
+                        }
+                    ]
+                },
+                "RoleId": "A********************",
+                "CreateDate": "2016-04-28T10:35:37Z",
+                "RoleName": "redshift-role",
+                "Path": "/",
+                "Arn": "arn:aws:iam::************:role/redshift-role"
+            }
+        ],
+        "CreateDate": "2016-04-28T10:36:30Z",
+        "InstanceProfileName": "redshift-role",
+        "Path": "/",
+        "Arn": "arn:aws:iam::************:instance-profile/redshift-role"
+    }
+}
 ```
 
 インスタンスプロファイルからIAMロールを削除
 
 ```
-aws iam remove-role-from-instance-profile --instance-profile-name ${} --role-name ${}
+aws iam remove-role-from-instance-profile --instance-profile-name ${ROLE_NAME} --role-name ${ROLE_NAME}
+```
+
+```
+（返値無し）
 ```
 
 インスタンスプロファイルの削除
 
 ```
-aws iam delete-instance-profile --instance-profile-name ${}
+aws iam delete-instance-profile --instance-profile-name ${ROLE_NAME}
 ```
 
 ```
@@ -140,30 +189,45 @@ aws iam delete-instance-profile --instance-profile-name ${}
 確認（Instance Profile）
 
 ```
-aws iam get-instance-profile --instance-profile-name ${}
+aws iam get-instance-profile --instance-profile-name ${ROLE_NAME}
 ```
 
 ```
-
+A client error (NoSuchEntity) occurred when calling the GetInstanceProfile operation: Instance Profile redshift-role cannot be found.
 ```
 
 
 確認（IAM Role）
 
 ```
-aws iam list-attached-role-policies --role-name ${}
+aws iam list-attached-role-policies --role-name ${ROLE_NAME}
 ```
 
 ```
-
+{
+    "AttachedPolicies": [
+        {
+            "PolicyName": "IAMFullAccess",
+            "PolicyArn": "arn:aws:iam::aws:policy/IAMFullAccess"
+        },
+        {
+            "PolicyName": "AmazonS3FullAccess",
+            "PolicyArn": "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+        },
+        {
+            "PolicyName": "AmazonRedshiftFullAccess",
+            "PolicyArn": "arn:aws:iam::aws:policy/AmazonRedshiftFullAccess"
+        }
+    ]
+}
 ```
 
 デタッチ
 
 ```
-aws iam detach-role-policy --role-name ${} --policy-arn ${}
-aws iam detach-role-policy --role-name ${} --policy-arn ${}
-aws iam detach-role-policy --role-name ${} --policy-arn ${}
+aws iam detach-role-policy --role-name ${ROLE_NAME} --policy-arn ${IAM_POLICY_ARN}
+aws iam detach-role-policy --role-name ${ROLE_NAME} --policy-arn ${RED_POLICY_ARN}
+aws iam detach-role-policy --role-name ${ROLE_NAME} --policy-arn ${S3_POLICY_ARN}
 ```
 
 ```
@@ -174,7 +238,7 @@ aws iam detach-role-policy --role-name ${} --policy-arn ${}
 削除
 
 ```
-aws iam delete-role --role-name ${}
+aws iam delete-role --role-name ${ROLE_NAME}
 ```
 
 ```
@@ -185,11 +249,11 @@ aws iam delete-role --role-name ${}
 確認
 
 ```
-aws iam list-attached-role-policies --role-name ${}
+aws iam list-attached-role-policies --role-name ${ROLE_NAME}
 ```
 
 ```
-
+A client error (NoSuchEntity) occurred when calling the ListAttachedRolePolicies operation: Role redshift-role does not exist.
 ```
 
 ## 5. Key Pairおよび秘密鍵ファイルの削除
@@ -203,7 +267,16 @@ ls -al ~/.ssh | grep ${KEY_MATERIAL_FILE}
 ```
 
 ```
+{
+    "KeyPairs": [
+        {
+            "KeyName": "Redshift",
+            "KeyFingerprint": "**:**:**:**:**:**:**:**:**:**:**:**:**:**:**:**:**:**:**:**"
+        }
+    ]
+}
 
+-rw------- 1 ec2-user ec2-user 1671 Apr 28 10:30 redshift.pem
 ```
 
 削除
@@ -227,9 +300,7 @@ ls -al ~/.ssh | grep ${KEY_MATERIAL_FILE}
 ```
 
 ```
-
-
-
+A client error (InvalidKeyPair.NotFound) occurred when calling the DescribeKeyPairs operation: The key pair 'Redshift' does not exist
 ```
 
 ## 6. VPCおよびVPCに関連するリソースの削除
@@ -242,19 +313,93 @@ Management ConsoleからVPCを削除すると、関連するリソースも一�
 確認
 
 ```
-aws ec2 describe-security-groups --group-ids ${}
-aws ec2 describe-security-groups --group-ids ${}
+aws ec2 describe-security-groups --group-ids ${SG_ID_SSH}
+aws ec2 describe-security-groups --group-ids ${SG_ID_REDSHIFT}
 ```
 
 ```
+{
+    "SecurityGroups": [
+        {
+            "IpPermissionsEgress": [
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "UserIdGroupPairs": [],
+                    "PrefixListIds": []
+                }
+            ],
+            "Description": "JAWS-UG CLI at Co-Edo",
+            "IpPermissions": [
+                {
+                    "PrefixListIds": [],
+                    "FromPort": 22,
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "ToPort": 22,
+                    "IpProtocol": "tcp",
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "GroupName": "SSH",
+            "VpcId": "vpc-********",
+            "OwnerId": "************",
+            "GroupId": "sg-********"
+        }
+    ]
+}
 
+{
+    "SecurityGroups": [
+        {
+            "IpPermissionsEgress": [
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "UserIdGroupPairs": [],
+                    "PrefixListIds": []
+                }
+            ],
+            "Description": "JAWS-UG CLI at Co-Edo",
+            "IpPermissions": [
+                {
+                    "PrefixListIds": [],
+                    "FromPort": 5439,
+                    "IpRanges": [
+                        {
+                            "CidrIp": "**.**.**.**/32"
+                        }
+                    ],
+                    "ToPort": 5439,
+                    "IpProtocol": "tcp",
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "GroupName": "Redshift",
+            "VpcId": "vpc-********",
+            "OwnerId": "************",
+            "GroupId": "sg-********"
+        }
+    ]
+}
 ```
 
 削除
 
 ```
-aws ec2 delete-security-group --group-id ${}
-aws ec2 delete-security-group --group-id ${}
+aws ec2 delete-security-group --group-id ${SG_ID_REDSHIFT}
+aws ec2 delete-security-group --group-id ${SG_ID_SSH}
 ```
 
 ```
@@ -264,12 +409,14 @@ aws ec2 delete-security-group --group-id ${}
 確認
 
 ```
-aws ec2 describe-security-groups --group-ids ${}
-aws ec2 describe-security-groups --group-ids ${}
+aws ec2 describe-security-groups --group-ids ${SG_ID_REDSHIFT}
+aws ec2 describe-security-groups --group-ids ${SG_ID_SSH}
 ```
 
 ```
+A client error (InvalidGroup.NotFound) occurred when calling the DescribeSecurityGroups operation: The security group 'sg-********' does not exist
 
+A client error (InvalidGroup.NotFound) occurred when calling the DescribeSecurityGroups operation: The security group 'sg-********' does not exist
 ```
 
 ### Subnetの削除
@@ -281,7 +428,20 @@ aws ec2 describe-subnets --subnet-ids ${SUBNET_A_ID}
 ```
 
 ```
-
+{
+    "Subnets": [
+        {
+            "VpcId": "vpc-********",
+            "CidrBlock": "10.0.0.0/24",
+            "MapPublicIpOnLaunch": false,
+            "DefaultForAz": false,
+            "State": "available",
+            "AvailabilityZone": "ap-northeast-1a",
+            "SubnetId": "subnet-********",
+            "AvailableIpAddressCount": 251
+        }
+    ]
+}
 ```
 
 削除
@@ -313,7 +473,20 @@ aws ec2 describe-internet-gateways --internet-gateway-ids ${IGW_ID}
 ```
 
 ```
-
+{
+    "InternetGateways": [
+        {
+            "Tags": [],
+            "InternetGatewayId": "igw-********",
+            "Attachments": [
+                {
+                    "State": "available",
+                    "VpcId": "vpc-********"
+                }
+            ]
+        }
+    ]
+}
 ```
 
 デタッチ
@@ -333,7 +506,15 @@ aws ec2 describe-internet-gateways --internet-gateway-ids ${IGW_ID}
 ```
 
 ```
-
+{
+    "InternetGateways": [
+        {
+            "Tags": [],
+            "InternetGatewayId": "igw-********",
+            "Attachments": []
+        }
+    ]
+}
 ```
 
 削除
@@ -365,7 +546,18 @@ aws ec2 describe-vpcs --vpc-ids ${VPC_ID}
 ```
 
 ```
-
+{
+    "Vpcs": [
+        {
+            "VpcId": "vpc-********",
+            "InstanceTenancy": "default",
+            "State": "available",
+            "DhcpOptionsId": "dopt-********",
+            "CidrBlock": "10.0.0.0/16",
+            "IsDefault": false
+        }
+    ]
+}
 ```
 
 削除

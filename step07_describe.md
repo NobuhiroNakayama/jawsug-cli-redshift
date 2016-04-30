@@ -278,49 +278,7 @@ aws redshift describe-cluster-versions
 }
 ```
 
-## クラスタースナップショットの確認
 
-Redshiftのクラスターは、自動でスナップショットが取得されます。
-
-```
-aws redshift describe-cluster-snapshots
-```
-
-```
-{
-    "Snapshots": [
-        {
-            "EstimatedSecondsToCompletion": -1,
-            "OwnerAccount": "************",
-            "CurrentBackupRateInMegaBytesPerSecond": 0.0,
-            "ActualIncrementalBackupSizeInMegaBytes": 12.0,
-            "NumberOfNodes": 1,
-            "Status": "available",
-            "VpcId": "vpc-********",
-            "ClusterVersion": "1.0",
-            "Tags": [],
-            "MasterUsername": "awsuser",
-            "TotalBackupSizeInMegaBytes": 12.0,
-            "DBName": "mydb",
-            "BackupProgressInMegaBytes": 12.0,
-            "ClusterCreateTime": "2016-04-28T10:47:23.091Z",
-            "RestorableNodeTypes": [
-                "dc1.large"
-            ],
-            "EncryptedWithHSM": false,
-            "ClusterIdentifier": "mycluster",
-            "SnapshotCreateTime": "2016-04-28T10:50:56.242Z",
-            "AvailabilityZone": "ap-northeast-1a",
-            "NodeType": "dc1.large",
-            "Encrypted": false,
-            "ElapsedTimeInSeconds": 1,
-            "SnapshotType": "automated",
-            "Port": 5439,
-            "SnapshotIdentifier": "rs:mycluster-2016-04-28-10-50-56"
-        }
-    ]
-}
-```
 
 ## ？？？
 
@@ -350,8 +308,11 @@ aws redshift describe-table-restore-status --cluster-identifier ${CLUSTER_NAME}
 }
 ```
 
-## 
+## イベント関連のコマンドを確認
 
+イベントとは、
+
+SNSを利用し、条件を満たすイベントが発生した際に通知することが可能
 
 
 ```
@@ -364,31 +325,606 @@ aws redshift describe-events
 }
 ```
 
+```
+aws redshift describe-event-categories
+```
+
+```
+{
+    "EventCategoriesMapList": [
+        {
+            "SourceType": "cluster",
+            "Events": [
+                {
+                    "EventId": "REDSHIFT-EVENT-2000",
+                    "EventCategories": [
+                        "management"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster <cluster name> created at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-2001",
+                    "EventCategories": [
+                        "management"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster <cluster name> deleted at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-3000",
+                    "EventCategories": [
+                        "monitoring"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster <cluster name> rebooted at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-3001",
+                    "EventCategories": [
+                        "monitoring"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster <cluster name> node replaced at <time in UTC>. Cluster operating normally."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-4000",
+                    "EventCategories": [
+                        "security"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Master credentials updated for cluster <cluster name> at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-1000",
+                    "EventCategories": [
+                        "configuration"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Parameter group <parameter group name> changes were associated with cluster <cluster name> at <time in UTC>. Changes will be applied on reboot."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-2002",
+                    "EventCategories": [
+                        "management"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "VPC security groups for cluster <cluster name> updated at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-2003",
+                    "EventCategories": [
+                        "management"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Maintenance started on cluster <cluster name> at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-2004",
+                    "EventCategories": [
+                        "management"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Maintenance on cluster <cluster name> completed at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-2006",
+                    "EventCategories": [
+                        "management"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster <cluster name> resize started at <time in UTC>. Cluster is in read-only mode."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-2007",
+                    "EventCategories": [
+                        "management"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "A resize request for cluster <cluster name> has been acknowledged."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-3002",
+                    "EventCategories": [
+                        "monitoring"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster <cluster name> resize completed at <time in UTC>. Cluster is available for both reads and writes."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-3500",
+                    "EventCategories": [
+                        "monitoring"
+                    ],
+                    "Severity": "ERROR",
+                    "EventDescription": "Cluster <cluster name> resize failed at <time in UTC>. Operation will be retried within a few minutes."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-1001",
+                    "EventCategories": [
+                        "configuration"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster <cluster name> parameter group changed to <parameter group name> at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-1500",
+                    "EventCategories": [
+                        "configuration"
+                    ],
+                    "Severity": "ERROR",
+                    "EventDescription": "VPC <VPC name> does not exist. Configuration changes for cluster <cluster name> were not applied."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-1501",
+                    "EventCategories": [
+                        "configuration"
+                    ],
+                    "Severity": "ERROR",
+                    "EventDescription": "Subnets in cluster subnet group <subnet name> for Amazon VPC <VPC name> do not exist or are invalid. Cluster <cluster name> could not be created."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-1502",
+                    "EventCategories": [
+                        "configuration"
+                    ],
+                    "Severity": "ERROR",
+                    "EventDescription": "Subnets in cluster subnet group <subnet name> have no available IP addresses. Cluster <cluster name> could not be created."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-1503",
+                    "EventCategories": [
+                        "configuration"
+                    ],
+                    "Severity": "ERROR",
+                    "EventDescription": "VPC <VPC name> has no Internet gateway. Configuration changes for cluster <cluster name> were not applied."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-2008",
+                    "EventCategories": [
+                        "management"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster restore <cluster name> from snapshot <snapshot name> started at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-3003",
+                    "EventCategories": [
+                        "monitoring"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster <cluster name> was restored from cluster snapshot <snapshot name> at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-3501",
+                    "EventCategories": [
+                        "monitoring"
+                    ],
+                    "Severity": "ERROR",
+                    "EventDescription": "Cluster restore <cluster name> from cluster snapshot <snapshot name> failed at <time in UTC>. Retry from the Amazon Redshift console."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-4500",
+                    "EventCategories": [
+                        "security"
+                    ],
+                    "Severity": "ERROR",
+                    "EventDescription": "A VPC security group is invalid. Configuration changes for cluster <cluster name> were not applied."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-4501",
+                    "EventCategories": [
+                        "security"
+                    ],
+                    "Severity": "ERROR",
+                    "EventDescription": "An EC2 security group <security group name> specified in cluster security group <security group name> was not found. Authorization cannot be completed."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-4001",
+                    "EventCategories": [
+                        "security"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Security group of cluster <cluster name> modified at <time in UTC>. Changes will be automatically applied to all associated clusters."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-1504",
+                    "EventCategories": [
+                        "configuration"
+                    ],
+                    "Severity": "ERROR",
+                    "EventDescription": "Unable to connect to HSM for cluster <cluster name>.  Please consult the documentation for troubleshooting details."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-1505",
+                    "EventCategories": [
+                        "configuration"
+                    ],
+                    "Severity": "ERROR",
+                    "EventDescription": "Unable to register HSM for cluster <cluster name>. Please provide a different configuration."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-3007",
+                    "EventCategories": [
+                        "monitoring"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Your Snapshot <snapshot name> was successfully copied from region <source region> to <destination region> at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-3504",
+                    "EventCategories": [
+                        "monitoring"
+                    ],
+                    "Severity": "ERROR",
+                    "EventDescription": "S3 bucket <S3 bucket name> is no longer valid for logging for cluster <cluster name>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-3505",
+                    "EventCategories": [
+                        "monitoring"
+                    ],
+                    "Severity": "ERROR",
+                    "EventDescription": "The S3 Bucket <S3 bucket name> does not have the necessary IAM policies for cluster <cluster name>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-3506",
+                    "EventCategories": [
+                        "monitoring"
+                    ],
+                    "Severity": "ERROR",
+                    "EventDescription": "S3 bucket <S3 bucket name> does not exist. Logging cannot be continued for cluster <cluster name>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-3507",
+                    "EventCategories": [
+                        "monitoring"
+                    ],
+                    "Severity": "ERROR",
+                    "EventDescription": "Cluster <cluster name> cannot be created.  EIP <ip address> is currently in use."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-3508",
+                    "EventCategories": [
+                        "monitoring"
+                    ],
+                    "Severity": "ERROR",
+                    "EventDescription": "Cluster <cluster name> cannot be created. EIP <ip address> could not be found."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-3509",
+                    "EventCategories": [
+                        "monitoring"
+                    ],
+                    "Severity": "ERROR",
+                    "EventDescription": "Cross Region Snapshot Copy is not enabled for cluster <cluster name>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-2013",
+                    "EventCategories": [
+                        "management"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster renamed to <new cluster identifier> at <time in UTC>."
+                }
+            ]
+        },
+        {
+            "SourceType": "cluster-security-group",
+            "Events": [
+                {
+                    "EventId": "REDSHIFT-EVENT-4002",
+                    "EventCategories": [
+                        "security"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster security group <security group name> created at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-4003",
+                    "EventCategories": [
+                        "security"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster security group <security group name> deleted at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-4004",
+                    "EventCategories": [
+                        "security"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster security group <security group name> updated at <time in UTC>. Changes will be automatically applied to associated clusters."
+                }
+            ]
+        },
+        {
+            "SourceType": "cluster-parameter-group",
+            "Events": [
+                {
+                    "EventId": "REDSHIFT-EVENT-1002",
+                    "EventCategories": [
+                        "configuration"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Parameter <parameter name> in Parameter Group <parameter group name> was updated to <new value> at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-1003",
+                    "EventCategories": [
+                        "configuration"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster parameter group <parameter group name> created at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-1004",
+                    "EventCategories": [
+                        "configuration"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster parameter group <parameter group name> deleted at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-1005",
+                    "EventCategories": [
+                        "configuration"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster parameter group <parameter group name> was updated at <time in UTC>. Changes will be applied to associated clusters on reboot."
+                }
+            ]
+        },
+        {
+            "SourceType": "cluster-snapshot",
+            "Events": [
+                {
+                    "EventId": "REDSHIFT-EVENT-2009",
+                    "EventCategories": [
+                        "management"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster snapshot <snapshot name> for cluster <cluster name> started at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-3004",
+                    "EventCategories": [
+                        "monitoring"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster snapshot <snapshot name> for cluster <cluster name> completed successfully at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-3503",
+                    "EventCategories": [
+                        "monitoring"
+                    ],
+                    "Severity": "ERROR",
+                    "EventDescription": "Cluster snapshot <snapshot name> for cluster <cluster name> failed at time <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-2010",
+                    "EventCategories": [
+                        "management"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster snapshot <snapshot name>' for cluster <cluster name> cancelled at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-2011",
+                    "EventCategories": [
+                        "management"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Cluster snapshot <snapshot name> for cluster <cluster name> was deleted at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-2012",
+                    "EventCategories": [
+                        "management"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Final cluster snapshot <snapshot name> for cluster <cluster name> started at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-3005",
+                    "EventCategories": [
+                        "monitoring"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Final cluster snapshot <snapshot name> for cluster <cluster name> succeeded at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-3502",
+                    "EventCategories": [
+                        "monitoring"
+                    ],
+                    "Severity": "ERROR",
+                    "EventDescription": "Final cluster snapshot <snapshot name> for cluster <cluster name> failed at <time in UTC>."
+                },
+                {
+                    "EventId": "REDSHIFT-EVENT-3006",
+                    "EventCategories": [
+                        "monitoring"
+                    ],
+                    "Severity": "INFO",
+                    "EventDescription": "Final cluster snapshot <snapshot name> for cluster <cluster name> cancelled at <time in UTC>."
+                }
+            ]
+        }
+    ]
+}
+```
+
+```
+aws redshift describe-event-subscriptions
+```
+
+```
+{
+    "EventSubscriptionsList": []
+}
+```
+
+## ログの取得設定の確認
+
+S3バケットにログを出力可能
 
 
 ```
-aws 
+aws redshift describe-logging-status --cluster-identifier mycluster
+```
 
-
-
-
-
-
-describe-event-categories
-describe-event-subscriptions
-describe-events
-
-
-
-
-describe-logging-status
-
-describe-orderable-cluster-options
-
-describe-resize
-
-describe-tags
-
+```
+{
+    "LoggingEnabled": false
+}
 ```
 
 
+## ？？？
+
+（調査）
+
+```
+aws redshift describe-orderable-cluster-options
+```
+
+```
+{
+    "OrderableClusterOptions": [
+        {
+            "NodeType": "ds2.8xlarge",
+            "AvailabilityZones": [
+                {
+                    "Name": "ap-northeast-1a"
+                },
+                {
+                    "Name": "ap-northeast-1c"
+                }
+            ],
+            "ClusterVersion": "1.0",
+            "ClusterType": "multi-node"
+        },
+        {
+            "NodeType": "ds2.xlarge",
+            "AvailabilityZones": [
+                {
+                    "Name": "ap-northeast-1a"
+                },
+                {
+                    "Name": "ap-northeast-1c"
+                }
+            ],
+            "ClusterVersion": "1.0",
+            "ClusterType": "multi-node"
+        },
+        {
+            "NodeType": "ds2.xlarge",
+            "AvailabilityZones": [
+                {
+                    "Name": "ap-northeast-1a"
+                },
+                {
+                    "Name": "ap-northeast-1c"
+                }
+            ],
+            "ClusterVersion": "1.0",
+            "ClusterType": "single-node"
+        },
+        {
+            "NodeType": "ds1.8xlarge",
+            "AvailabilityZones": [
+                {
+                    "Name": "ap-northeast-1a"
+                },
+                {
+                    "Name": "ap-northeast-1c"
+                }
+            ],
+            "ClusterVersion": "1.0",
+            "ClusterType": "multi-node"
+        },
+        {
+            "NodeType": "ds1.xlarge",
+            "AvailabilityZones": [
+                {
+                    "Name": "ap-northeast-1a"
+                },
+                {
+                    "Name": "ap-northeast-1c"
+                }
+            ],
+            "ClusterVersion": "1.0",
+            "ClusterType": "multi-node"
+        },
+        {
+            "NodeType": "ds1.xlarge",
+            "AvailabilityZones": [
+                {
+                    "Name": "ap-northeast-1a"
+                },
+                {
+                    "Name": "ap-northeast-1c"
+                }
+            ],
+            "ClusterVersion": "1.0",
+            "ClusterType": "single-node"
+        },
+        {
+            "NodeType": "dc1.8xlarge",
+            "AvailabilityZones": [
+                {
+                    "Name": "ap-northeast-1a"
+                },
+                {
+                    "Name": "ap-northeast-1c"
+                }
+            ],
+            "ClusterVersion": "1.0",
+            "ClusterType": "multi-node"
+        },
+        {
+            "NodeType": "dc1.large",
+            "AvailabilityZones": [
+                {
+                    "Name": "ap-northeast-1a"
+                },
+                {
+                    "Name": "ap-northeast-1c"
+                }
+            ],
+            "ClusterVersion": "1.0",
+            "ClusterType": "multi-node"
+        },
+        {
+            "NodeType": "dc1.large",
+            "AvailabilityZones": [
+                {
+                    "Name": "ap-northeast-1a"
+                },
+                {
+                    "Name": "ap-northeast-1c"
+                }
+            ],
+            "ClusterVersion": "1.0",
+            "ClusterType": "single-node"
+        }
+    ]
+}
+```
+
+
+## タグ付け状況の確認
+
+```
+aws redshift describe-tags
+```
+
+```
+{
+    "TaggedResources": []
+}
+```
+
+以上です。

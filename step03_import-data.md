@@ -17,6 +17,10 @@ cat << ETX
 ETX
 ```
 
+```
+
+```
+
 
 # 1．クライアントへの接続
 
@@ -158,7 +162,7 @@ aws iam create-user --user-name ${IAM_USER_NAME}
 ポリシーのアタッチ
 
 ```
-aws iam attach-user-policy --user-name ${IAM_USER_NAME} --policy-arn "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+aws iam attach-user-policy --user-name ${IAM_USER_NAME} --policy-arn "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 ```
 
 ```
@@ -176,8 +180,8 @@ aws iam list-attached-user-policies --user-name ${IAM_USER_NAME}
 {
     "AttachedPolicies": [
         {
-            "PolicyName": "AmazonS3ReadOnlyAccess",
-            "PolicyArn": "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+            "PolicyName": "AmazonS3FullAccess",
+            "PolicyArn": "arn:aws:iam::aws:policy/AmazonS3FullAccess"
         }
     ]
 }
